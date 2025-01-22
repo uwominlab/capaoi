@@ -1,0 +1,19 @@
+# .clang-format for Python
+BasedOnStyle: Google
+Language: Python
+IndentWidth: 4  # PEP 8 standard
+ContinuationIndentWidth: 4  # Align with PEP 8
+ColumnLimit: 88  # PEP 8 recommended max line length
+AllowShortFunctionsOnASingleLine: None  # Avoid short functions on one line
+DerivePointerAlignment: false
+PointerAlignment: Left  # Match Python's style for functions
+SortIncludes: false  # Not relevant for Python
+
+# Optional settings specific to `clang-format`
+AlignAfterOpenBracket: AlwaysBreak
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+BreakBeforeBinaryOperators: NonAssignment
+BreakAfterLogical: false
+PenaltyBreakComment: 60
+PenaltyExcessCharacter: 200
