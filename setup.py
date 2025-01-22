@@ -7,6 +7,15 @@
 
 from setuptools import setup, find_packages
 
+
+with open("requirements.txt", "r") as f:
+    requirements: list[str] = [
+        line.strip()
+        for line in f
+        if line.strip() and not line.startswith("#")
+    ]
+
+
 setup(
     name="capaoi",
     version="1.0.0",
@@ -31,7 +40,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Topic :: Education :: Computer Vision",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
@@ -40,13 +48,14 @@ setup(
         "industry 4.0",
         "university"
     ],
-    packages=find_packages(where="src"),
-    package_dir={"": "src"},
     python_requires=">=3.8",
-    install_requires="requirements.txt",  # Use dependencies from requirements.txt
     extras_require={
-        "dev": ["pytest>=7.0", "sphinx>=5.0", "black>=23.0"],
+        "dev": ["pytest>=7.0", "black>=23.0"],
     },
+    package_dir={"": "."},  # Root-level
+    packages=find_packages(where="."),  # Automatically find packages in root
+    py_modules=["main"],  # main.py
+    install_requires=requirements,  # Pass the dependencies here
     entry_points={
         "console_scripts": [
             "capaoi=main:main",  # Maps the console command `capaoi` to `main` in `main.py`
