@@ -31,7 +31,6 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Topic :: Education :: Computer Vision",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
@@ -40,13 +39,11 @@ setup(
         "industry 4.0",
         "university"
     ],
-    packages=find_packages(where="src"),
-    package_dir={"": "src"},
     python_requires=">=3.8",
-    install_requires="requirements.txt",  # Use dependencies from requirements.txt
     extras_require={
-        "dev": ["pytest>=7.0", "sphinx>=5.0", "black>=23.0"],
+        "dev": ["pytest>=7.0", "black>=23.0"],
     },
+    py_modules=["main"],  # main.py
     entry_points={
         "console_scripts": [
             "capaoi=main:main",  # Maps the console command `capaoi` to `main` in `main.py`
