@@ -146,7 +146,7 @@ def find_contours_img(img_raw, img_opened, mask_binary):
 
 
 
-def capsule_defect_detection(capsule_set_raw, capsule_set_opened, capsule_size, capsule_area, capsule_similarity,
+def capsule_defect_detection(capsule_set_raw, capsule_set_opened,  capsule_centers, capsule_size, capsule_area, capsule_similarity,
                              nor_len_range=[380, 400], nor_area_range=[47000, 50000]):
     """
     :param capsule_set_raw:    胶囊的裁剪图 原图
@@ -233,9 +233,10 @@ if __name__ == "__main__":
     # cv2.destroyAllWindows()
     # img_path = 'Figs/008.png'
     # img_path = 'Figs/011.png'
-    img_path = '../data/Figs_14/006.bmp'
+    img_path = 'Figs_14/006.bmp'
+    # img_path = 'Figs_14/007.jpg'
     img_raw = cv2.imread(img_path)
-    # img_raw = img_raw[:, 1300: 2200:, :]
+    img_raw = img_raw[:, 1300: 2200:, :]
     # img_raw = np.transpose(img_raw, (1, 0, 2))
     # show_img("img_raw", img_raw)
 
