@@ -1,3 +1,6 @@
+#!usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 """
 Module contains helper Functions to transform an image.
 """
@@ -49,6 +52,27 @@ def cut_image_by_box(img: cv2.typing.MatLike, points: np.ndarray) -> cv2.typing.
         img, transformation_matrix, (width, height))
 
     return transformed_image
+
+
+def get_img_opened(img_raw: cv2.typing.MatLike) -> cv2.typing.MatLike:
+    """
+    Applies a series of image processing operations to the input image.
+
+    This function converts the input image to grayscale, applies a binary threshold,
+    and then performs morphological closing followed by morphological opening.
+
+    Args:
+        img_raw (cv2.typing.MatLike): The raw input image.
+
+    Returns:
+        cv2.typing.MatLike: The processed image after applying the morphological operations.
+    """
+    img_gray: cv2.typing.MatLike = cv2.cvtColor(img_raw, cv2.COLOR_BGR2GRAY)
+    _, img_binary = cv2.threshold(img_gray, 125, 255, cv2.THRESH_BINARY)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    img_closed: cv2.typing.MatLike = cv2.morphologyEx(img_binary, cv2.MORPH_CLOSE, kernel)
+    img_opened: cv2.typing.MatLike = cv2.morphologyEx(img_closed, cv2.MORPH_OPEN, kernel)
+    return img_opened
 
 
 def preprocess_image(image: cv2.typing.MatLike) -> cv2.typing.MatLike:
