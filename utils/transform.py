@@ -51,7 +51,7 @@ def cut_image_by_box(img: cv2.typing.MatLike, points: np.ndarray) -> cv2.typing.
     return transformed_image
 
 
-def preprocess_image(image: np.ndarray) -> cv2.typing.MatLike:
+def preprocess_image(image: cv2.typing.MatLike) -> cv2.typing.MatLike:
     """
     Function to preprocess an image by the following steps:
     1 - convert the image to grayscale
