@@ -21,3 +21,8 @@ Launch the project directly from the terminal using:
 ```bash
 capaoi  # Windows, Linux
 ```
+
+
+## Reference
+> https://opencv24-python-tutorials.readthedocs.io/en/latest/index.html
+> https://www.geeksforgeeks.org/python-opencv-morphological-operations/
