@@ -139,15 +139,57 @@ def find_contours_img(img_raw, img_opened, mask_binary):
         capsule_similarity.append(similarity)
         target_raw_copy = target_raw.copy()
         cv2.drawContours(target_raw_copy, contours, -1, (0, 255, 0), 3)
-        # show_img("{}/{} capsules >> L: {:.2f} W: {:.2f} Area: {}".format(ii+1, len(rects), length, width, area), target_raw_copy)
+        show_img("{}/{} capsules >> L: {:.2f} W: {:.2f} Area: {}".format(ii+1, len(rects), length, width, area), target_raw_copy)
         # show_img("{}/{} capsules: ".format(ii+1, len(rects)), target_opened)
 
     return new_contours, capsule_set_raw, capsule_set_opened, rects, capsule_centers, capsule_size, capsule_area, capsule_similarity
 
 
 
+def detect_local_defects(capsule_raw, capsule_opened):
+    # (原图掩膜操作>>均值滤波>>滤波图像原图进行差分>>二值化>>查找轮廓(根据轮廓长度进行筛选)
+    draw_image = capsule_raw.copy()
+    capsule_masked = cv2.bitwise_and(draw_image, draw_image, mask=capsule_opened)  # 对原始图像进行掩码运算
+    # show_img("capsule_masked", capsule_masked)
+    # 截取胶囊中部视角
+    window = [int(0.35 * capsule_masked.shape[1]), int(0.65 * capsule_masked.shape[1])]
+    capsule_masked = capsule_masked[:, window[0]: window[1], :]
+    # show_img("capsule_masked", capsule_masked)
+
+    img1 = capsule_masked
+    img2 = capsule_masked
+    # 中值滤波
+    img1 = cv2.medianBlur(img1, 15)  # 均值滤波
+    diff = cv2.absdiff(img1, img2)  # 图像差分
+    # show_img("diff", diff)  # 差分结果图
+
+    gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)  # 二值化
+    minThres = 6
+    _, thres = cv2.threshold(gray, minThres, 255, cv2.THRESH_BINARY)
+    # show_img("thres", thres)  # 差分结果图
+    # 提取轮廓
+    contours, hierarchy = cv2.findContours(thres, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+    # 缺陷轮廓排序，最大缺陷
+    is_defect = False
+    # contours = sorted(contours, key=len, reverse=True)
+    for i in range(0, len(contours)):
+        length = cv2.arcLength(contours[i], True)
+        # info = info + ">>>>局部缺陷长度: {}".format(length)
+        # 通过轮廓长度筛选
+        if 100 < length:
+            is_defect = True
+            cv2.drawContours(img2, contours[i], -1, (0, 0, 255), 2)
+            show_img("local_defects", img2)
+
+    return is_defect
+
+
+
+
+
 def capsule_defect_detection(capsule_set_raw, capsule_set_opened,  capsule_centers, capsule_size, capsule_area, capsule_similarity,
-                             nor_len_range=[380, 400], nor_area_range=[47000, 50000]):
+                             nor_len_range=[310, 320], nor_area_range=[30500, 32000]):
     """
     :param capsule_set_raw:    胶囊的裁剪图 原图
     :param capsule_set_opened: 胶囊的裁剪 二值图
@@ -186,36 +228,12 @@ def capsule_defect_detection(capsule_set_raw, capsule_set_opened,  capsule_cente
         info += ' >> Abnormal !\n' if 0.1 < similarity else '\n'
 
         # 检测项目4：局部缺陷检测
-        # (原图掩膜操作>>均值滤波>>滤波图像原图进行差分>>二值化>>查找轮廓(根据轮廓长度进行筛选)
-        draw_image = capsule_raw.copy()
         capsule_opened = capsule_set_opened[ii]
-        capsule_masked = cv2.bitwise_and(draw_image, draw_image, mask=capsule_opened)  # 对原始图像进行掩码运算
-        # show_img("capsule_masked", capsule_masked)
-        # 截取胶囊中部视角
-        window = [int(0.35 * capsule_masked.shape[1]), int(0.65 * capsule_masked.shape[1])]
-        capsule_masked = capsule_masked[:, window[0]: window[1], :]
-        # show_img("capsule_masked", capsule_masked)
-
-        img1 = capsule_masked
-        img2 = capsule_masked
-        # 中值滤波
-        img1 = cv2.medianBlur(img1, 15)  # 均值滤波
-        diff = cv2.absdiff(img1, img2)   # 图像差分
-        # show_img("diff", diff)  # 差分结果图
-
-        gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)  # 二值化
-        minThres = 6
-        _, thres = cv2.threshold(gray, minThres, 255, cv2.THRESH_BINARY)
-        # show_img("thres", thres)  # 差分结果图
-        # 提取轮廓
-        contours, hierarchy = cv2.findContours(thres, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        # 轮廓筛选
-        for i in range(0, len(contours)):
-            length = cv2.arcLength(contours[i], True)
-            # 通过轮廓长度筛选
-            if length > 50:
-                cv2.drawContours(img2, contours[i], -1, (0, 0, 255), 2)
-        # show_img("result", img2)
+        info = info + ">>>>局部缺陷: {}".format(similarity)
+        is_defect = detect_local_defects(capsule_raw, capsule_opened)
+        if is_defect:
+            result_flag = 1
+        info += ' >> Abnormal !\n' if result_flag else '\n'
 
         # 打印状态信息 info
         print(info)
@@ -230,17 +248,15 @@ def capsule_defect_detection(capsule_set_raw, capsule_set_opened,  capsule_cente
 
 if __name__ == "__main__":
     start_time = time.time()
-    # cv2.destroyAllWindows()
-    # img_path = 'Figs/008.png'
-    # img_path = 'Figs/011.png'
-    img_path: str = '../data/Figs_14/006.bmp'
+    # img_path = 'Figs_14/006.bmp'
+    img_path = 'Figs_30/001.bmp'
     # img_path = 'Figs_14/007.jpg'
     img_raw = cv2.imread(img_path)
-    img_raw = img_raw[:, 1300: 2200:, :]
+    # img_raw = img_raw[:, 1300: 2200:, :]
     # img_raw = np.transpose(img_raw, (1, 0, 2))
     # show_img("img_raw", img_raw)
 
-    mask_img_path: str = '../data/Figs_14/000_mask_raw.png'
+    mask_img_path = 'Figs/000_mask_raw.png'
     mask_raw = cv2.imread(mask_img_path)
     _, mask_binary = img_preprocessing(mask_raw)
 
