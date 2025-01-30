@@ -15,7 +15,7 @@ MAX_WIDTH: int = 4196
 MAX_HEIGHT: int = 2128
 
 # Visualization window hyper parameters
-INIT_WIDTH: int = 1080
-INIT_HEIGHT: int = 720
+INIT_WIDTH: int = 2160
+INIT_HEIGHT: int = 1440
 
 GRABBING_TIMEOUT_MS: int = 5000
