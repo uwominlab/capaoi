@@ -86,9 +86,9 @@ def find_contours_img(img_raw, img_opened, mask_binary):
             box = np.int64(cv2.boxPoints(rect))  # 通过函数cv2.boxPoints获得绘制这个矩形需要矩形的4个角点
             boxs.append(box)
             # cv2.circle(draw_img, (rect[0][0], y[0][1]), r, (0, 255, 0), 4)
-    draw_img = cv2.drawContours(img_raw.copy(), boxs, -1, (0, 0, 255), 2)
-    for center in capsule_centers:
-        cv2.circle(draw_img, (int(center[0]), int(center[1])), 10, (0, 0, 255), 10)
+    # draw_img = cv2.drawContours(img_raw.copy(), boxs, -1, (0, 0, 255), 2)
+    # for center in capsule_centers:
+    #     cv2.circle(draw_img, (int(center[0]), int(center[1])), 10, (0, 0, 255), 10)
     # show_img("contour_defection_results", draw_img)
 
     # 导入标准胶囊的轮廓 mask
@@ -118,16 +118,16 @@ def find_contours_img(img_raw, img_opened, mask_binary):
         target_opened = CutImgeByBox(img_opened, cut_box)
 
         # 如果纵向排布，变成横向
-        if target_raw.shape[0] > target_raw.shape[1]:
-            target_raw = cv2.rotate(target_raw, cv2.ROTATE_90_CLOCKWISE)
-            target_opened = cv2.rotate(target_opened, cv2.ROTATE_90_CLOCKWISE)
+        # if target_raw.shape[0] > target_raw.shape[1]:
+        #     target_raw = cv2.rotate(target_raw, cv2.ROTATE_90_CLOCKWISE)
+        #     target_opened = cv2.rotate(target_opened, cv2.ROTATE_90_CLOCKWISE)
         capsule_set_raw.append(target_raw)
         capsule_set_opened.append(target_opened)
 
         # 胶囊参数计算：长度length  宽度width  面积area
         contours = cv2.findContours(target_opened, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)  # 输入图像（二值图像，黑色作为背景，白色作为目标），轮廓检索方式，
         contours = imutils.grab_contours(contours)  # 适配不同的 opencv 版本
-        contours = sorted(contours, key=len, reverse=True)
+        # contours = sorted(contours, key=len, reverse=True)
         new_contours.append(contours[0])
 
         length, width = np.max(rects[ii][1]), np.min(rects[ii][1][1])
@@ -139,10 +139,10 @@ def find_contours_img(img_raw, img_opened, mask_binary):
         capsule_similarity.append(similarity)
         target_raw_copy = target_raw.copy()
         cv2.drawContours(target_raw_copy, contours, -1, (0, 255, 0), 3)
-        show_img("{}/{} capsules >> L: {:.2f} W: {:.2f} Area: {}".format(ii+1, len(rects), length, width, area), target_raw_copy)
+        # show_img("{}/{} capsules >> L: {:.2f} W: {:.2f} Area: {}".format(ii+1, len(rects), length, width, area), target_raw_copy)
         # show_img("{}/{} capsules: ".format(ii+1, len(rects)), target_opened)
 
-    return new_contours, capsule_set_raw, capsule_set_opened, rects, capsule_centers, capsule_size, capsule_area, capsule_similarity
+    return new_contours, capsule_set_raw, capsule_set_opened, boxs, capsule_centers, capsule_size, capsule_area, capsule_similarity
 
 
 
@@ -173,83 +173,87 @@ def detect_local_defects(capsule_raw, capsule_opened):
     # 缺陷轮廓排序，最大缺陷
     is_defect = False
     # contours = sorted(contours, key=len, reverse=True)
+    max_length = 0
     for i in range(0, len(contours)):
         length = cv2.arcLength(contours[i], True)
         # info = info + ">>>>局部缺陷长度: {}".format(length)
         # 通过轮廓长度筛选
-        if 100 < length:
+        if 75 < length and max_length < length:
+            max_length = length
             is_defect = True
             cv2.drawContours(img2, contours[i], -1, (0, 0, 255), 2)
-            show_img("local_defects", img2)
+            # show_img("local_defects", img2)
 
-    return is_defect
-
-
+    return is_defect, max_length
 
 
 
 def capsule_defect_detection(capsule_set_raw, capsule_set_opened,  capsule_centers, capsule_size, capsule_area, capsule_similarity,
-                             nor_len_range=[310, 320], nor_area_range=[30500, 32000]):
+                             nor_len_range=[310, 330], nor_area_range=[30500, 34000]):
     """
     :param capsule_set_raw:    胶囊的裁剪图 原图
     :param capsule_set_opened: 胶囊的裁剪 二值图
-    :param rects:  胶囊的最小外接矩形 info: rect_center, rect_scale, rotation_angle
-    :param boxs:  胶囊的最小外接矩形的顶点
-    :param nor_len_range: 正常长度范围
+    :param capsule_centers:    胶囊的在capsule_set_raw中的中心坐标
+    :param capsule_size:       胶囊的尺寸
+    :param capsule_area:       胶囊面积
+    :param capsule_similarity: 胶囊的相似度
+    :param nor_len_range:      正常长度范围
+    :param nor_area_range:     正常面积范围
 
     :return:
+
     """
-    centers_abnormal_capsule = []
+    abnormal_capsule_centers = []
 
     for ii in range(0, len(capsule_set_raw)):
         capsule_raw = capsule_set_raw[ii]
         info = "{} of {} capsules: \n".format(ii + 1, len(capsule_set_raw))
-        result_flag = 0
+        is_abnormal = False
 
         # 检测项目1：长度检测 >> 对比 待测胶囊的最小外接矩形长度 与 正常胶囊的最小外接矩形长度
         length, width = capsule_size[ii][0], capsule_size[ii][1]
         info = info + ">>>>长度: {}".format(length)
         if length < nor_len_range[0] or nor_len_range[1] < length:
-            result_flag = 1
+            is_abnormal = True
         info += ' >> Abnormal \n' if length < nor_len_range[0] or nor_len_range[1] < length else '\n'
 
         # 检测项目2：瘪壳检测 >> 对比 待测胶囊的轮廓面积 与 健康胶囊的面积
         area = capsule_area[ii]
         info = info + ">>>>面积: {}".format(area)
         if area < nor_area_range[0] or nor_area_range[1] < area:
-            result_flag = 1
+            is_abnormal = True
         info += ' >> Abnormal \n' if area < nor_area_range[0] or nor_area_range[1] < area else '\n'
 
         # 检测项目3：轮廓相似度比较 >> 0~1  越小越相似
         similarity = capsule_similarity[ii]
         info = info + ">>>>与 mask_binary 的轮廓相似度: {}".format(similarity)
-        if 0.1 < similarity:
-            result_flag = 1
-        info += ' >> Abnormal !\n' if 0.1 < similarity else '\n'
+        if 0.04 < similarity:
+            is_abnormal = True
+        info += ' >> Abnormal !\n' if 0.04 < similarity else '\n'
 
         # 检测项目4：局部缺陷检测
         capsule_opened = capsule_set_opened[ii]
-        info = info + ">>>>局部缺陷: {}".format(similarity)
-        is_defect = detect_local_defects(capsule_raw, capsule_opened)
+        info = info + ">>>>局部缺陷检测: {}".format(similarity)
+        is_defect, max_length = detect_local_defects(capsule_raw, capsule_opened)
         if is_defect:
-            result_flag = 1
-        info += ' >> Abnormal !\n' if result_flag else '\n'
+            is_abnormal = True
+        info += ' >> Abnormal !\n' if is_defect else '\n'
 
         # 打印状态信息 info
-        print(info)
-        # cv2.putText(draw_image, 'Result flag: '+ str(result_flag), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 1)
-        # show_img("{}/{} capsules".format(ii, len(capsule_set_raw)), draw_image)
+        # print(info)
+        if is_abnormal:
+            abnormal_capsule_centers.append(capsule_centers[ii])
 
-        if result_flag == 1:
-            centers_abnormal_capsule.append(capsule_centers[ii])
+        # show_img("{}/{} capsules >> is_abnormal: {}\n L: {}  W: {}  A: {}  S: {:.4f}  DL: {} ".format(ii+1,
+        #          len(capsule_set_raw), is_abnormal, int(length),  int(width), int(area), similarity, int(max_length)), capsule_raw)
 
-    return centers_abnormal_capsule
+    return abnormal_capsule_centers
 
 
 if __name__ == "__main__":
     start_time = time.time()
     # img_path = 'Figs_14/006.bmp'
-    img_path = 'Figs_30/001.bmp'
+    img_path = 'Figs_30/002.bmp'
     # img_path = 'Figs_14/007.jpg'
     img_raw = cv2.imread(img_path)
     # img_raw = img_raw[:, 1300: 2200:, :]
@@ -260,11 +264,19 @@ if __name__ == "__main__":
     mask_raw = cv2.imread(mask_img_path)
     _, mask_binary = img_preprocessing(mask_raw)
 
-    img_raw, img_opened = img_preprocessing(img_raw)
-    new_contours, capsule_set_raw, capsule_set_opened, rects, capsule_centers, capsule_size, capsule_area, capsule_similarity \
+    _, img_opened = img_preprocessing(img_raw)
+    new_contours, capsule_set_raw, capsule_set_opened, boxs, capsule_centers, capsule_size, capsule_area, capsule_similarity \
         = find_contours_img(img_raw, img_opened, mask_binary)
 
-    capsule_centers_abnormal = capsule_defect_detection(capsule_set_raw, capsule_set_opened, capsule_centers, capsule_size, capsule_area, capsule_similarity,)
+    capsule_centers_abnormal = capsule_defect_detection(capsule_set_raw, capsule_set_opened, capsule_centers, capsule_size, capsule_area, capsule_similarity)
+
+    draw_img = img_raw.copy()
+    draw_img = cv2.drawContours(draw_img, boxs, -1, (0, 255, 0), 2)
+    for center in capsule_centers_abnormal:
+        cv2.circle(draw_img, (int(center[0]), int(center[1])), 5, (0, 0, 255), 10)
+    show_img("Defection_results", draw_img)
+
+
 
     print('消耗的时间为：',(time.time() - start_time))
 
