@@ -12,6 +12,46 @@ import cv2
 MIN_BINARY_THRESH: int = 6
 
 
+def detect_defects(raw_image: cv2.typing.MatLike, mask: cv2.typing.MatLike) -> bool:
+    """
+    Detect defects in the given capsule image based on the mask.
+
+    Args:
+        raw_image (cv2.typing.MatLike): Original capsule image.
+        mask (cv2.typing.MatLike): Binary mask for the capsule.
+
+    Returns:
+        bool: True if a defect is detected, False otherwise.
+    """
+    masked_image = cv2.bitwise_and(raw_image, raw_image, mask=mask)
+    # Focus on the central region of the capsule
+    width_range = int(
+        0.35 * masked_image.shape[1]), int(0.65 * masked_image.shape[1])
+    central_region = masked_image[:, width_range[0]:width_range[1], :]
+
+    # Perform median filtering and difference computation
+    filtered = cv2.medianBlur(central_region, 15)
+    difference = cv2.absdiff(filtered, central_region)
+
+    # Convert to grayscale and threshold
+    gray_diff = cv2.cvtColor(difference, cv2.COLOR_BGR2GRAY)
+
+    _, binary_diff = cv2.threshold(
+        gray_diff, MIN_BINARY_THRESH, 255, cv2.THRESH_BINARY)
+
+    # Extract and filter contours
+    contours, _ = cv2.findContours(
+        binary_diff, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+    is_defect = False
+    for contour in contours:
+        if cv2.arcLength(contour, True) > 100:  # Threshold contour length
+            is_defect = True
+            cv2.drawContours(central_region, [contour], -1, (0, 0, 255), 2)
+
+    return is_defect
+
+
 def detect_local_defects(capsule_raw, capsule_opened):
     # (原图掩膜操作>>均值滤波>>滤波图像原图进行差分>>二值化>>查找轮廓(根据轮廓长度进行筛选)
     draw_image = capsule_raw.copy()
