@@ -6,6 +6,15 @@
 Contains the hyper parameter required for the project.
 """
 
+from pathlib import Path
+# Project structure hyper parameters
+
+# Define the base directory as the directory containing this file
+ROOT_DIR: Path = Path(__file__).resolve().parent
+
+# Define global paths
+DATA_DIR: Path = ROOT_DIR / 'data'
+
 # Camera image hyper parameters
 INIT_EXPOSURE_TIME: int = 12490
 INIT_FRAME_RATE: int = 40
