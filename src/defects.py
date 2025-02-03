@@ -96,8 +96,8 @@ def detect_capsule_defects(
     capsule_sizes: list[tuple[int, int]],
     capsule_areas: list[float],
     capsule_similarities: list[float],
-    normal_length_range: tuple[int, int] = (310, 320),
-    normal_area_range: tuple[int, int] = (30500, 32000)
+    normal_length_range: tuple[int, int] = (310, 330),
+    normal_area_range: tuple[int, int] = (30500, 34000)
 ) -> list[tuple[int, int]]:
     """
     Detect defects in capsules based on multiple criteria.
