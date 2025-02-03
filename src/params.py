@@ -8,7 +8,7 @@ Contains the hyper parameter required for the project.
 
 # Camera image hyper parameters
 INIT_EXPOSURE_TIME: int = 12490
-INIT_FRAME_RATE: int = 1
+INIT_FRAME_RATE: int = 40
 INIT_GAIN: int = 10
 
 MAX_WIDTH: int = 4196
