@@ -6,3 +6,4 @@ setuptools==69.5.1
 pypylon==4.1.0
 pymodbus==3.8.3
 imutils==0.5.4
+pyserial==3.5

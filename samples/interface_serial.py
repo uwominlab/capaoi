@@ -2,13 +2,15 @@
 Demonstration of a simple RS232 serial communication interface using PySerial.
 """
 
+COMMAND: str = 'Hello, World\n'
+
 import time
 
 import serial
 
-# Configure the serial port
+# Configure the serial connection
 ser = serial.Serial(
-    port='COM3',        # Replace with port
+    port='COM5',        # Replace with port
     baudrate=9600,      # Set the baud rate
     timeout=1,          # Timeout in seconds
     bytesize=serial.EIGHTBITS,
@@ -31,6 +33,14 @@ try:
     if ser.in_waiting > 0:
         response = ser.read(ser.in_waiting).decode('utf-8')
         print("Received:", response)
+
+    # Write data to the serial device
+    ser.write(COMMAND.encode('utf-8'))
+    print(f"Sent: {COMMAND.strip()}")
+
+    # Read a line of response from the device
+    response = ser.readline().decode('utf-8').strip()
+    print(f"Received: {response}")
 
 except serial.SerialException as e:
     print(f"Error: {e}")
