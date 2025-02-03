@@ -15,9 +15,11 @@ MIN_BINARY_THRESH: int = 6
 def detect_local_defects(capsule_raw, capsule_opened):
     # (原图掩膜操作>>均值滤波>>滤波图像原图进行差分>>二值化>>查找轮廓(根据轮廓长度进行筛选)
     draw_image = capsule_raw.copy()
-    capsule_masked = cv2.bitwise_and(draw_image, draw_image, mask=capsule_opened)  # 对原始图像进行掩码运算
+    capsule_masked = cv2.bitwise_and(
+        draw_image, draw_image, mask=capsule_opened)  # 对原始图像进行掩码运算
     # 截取胶囊中部视角
-    window = [int(0.35 * capsule_masked.shape[1]), int(0.65 * capsule_masked.shape[1])]
+    window = [int(0.35 * capsule_masked.shape[1]),
+              int(0.65 * capsule_masked.shape[1])]
     capsule_masked = capsule_masked[:, window[0]: window[1], :]
 
     img1 = capsule_masked
@@ -30,7 +32,8 @@ def detect_local_defects(capsule_raw, capsule_opened):
     minThres = 6
     _, thres = cv2.threshold(gray, minThres, 255, cv2.THRESH_BINARY)
     # 提取轮廓
-    contours, hierarchy = cv2.findContours(thres, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours, hierarchy = cv2.findContours(
+        thres, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
     # 缺陷轮廓排序，最大缺陷
     is_defect = False
@@ -76,39 +79,24 @@ def detect_capsule_defects(
 
         length, _ = size
 
-        is_abnormal: bool = False
-
-        # 1 >> Check if the capsule is too short or too long
+        # Step 1 >> Check if the capsule is too short or too long
         if not normal_length_range[0] <= length <= normal_length_range[1]:
             abnormal_capsule_centers.append(center)
-            is_abnormal = True
             continue
 
-        # 2 >> Check if the capsule has the proper area
-        if not (normal_area_range[0] <= area <= normal_area_range[1]) and not is_abnormal:
+        # Step 2 >> Check if the capsule has the proper area
+        if not (normal_area_range[0] <= area <= normal_area_range[1]):
             abnormal_capsule_centers.append(center)
-            is_abnormal = True
             continue
 
-        # 3 >> Check for contour similarity
-        if similarity > 0.1 and not is_abnormal:  # Higher similarity indicates more deviation
+        # Step 3 >> Check for contour similarity
+        if similarity > 0.04:  # Higher similarity indicates more deviation
             abnormal_capsule_centers.append(center)
-            is_abnormal = True
             continue
 
-        # 4 >> Defect detection
-        capsule_opened = capsule_set_opened[ii]
-        is_defect = detect_local_defects(capsule_raw, capsule_opened)
+        # Step 4 >> Defect detection
+        is_defect = detect_defects(raw_image, mask)
         if is_defect:
-            is_abnormal = 1
-
-        # 打印状态信息 info
-        print(info)
-        # cv2.putText(draw_image, 'Result flag: '+ str(result_flag), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 1)
-        # show_img("{}/{} capsules".format(ii, len(capsule_set_raw)), draw_image)
-
-        if is_abnormal == 1:
-            centers_abnormal_capsule.append(capsule_centers[ii])
-
+            abnormal_capsule_centers.append(center)
 
         return abnormal_capsule_centers
