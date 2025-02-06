@@ -124,7 +124,7 @@ def find_contours_img(img_raw, img_opened, mask_binary):
         capsule_set_raw.append(target_raw)
         capsule_set_opened.append(target_opened)
 
-        # 胶囊参数计算：长度length  宽度width  面积area
+        # 胶囊参数计算：长度length  宽度width  面积area  轮廓相似度similarity
         contours = cv2.findContours(target_opened, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)  # 输入图像（二值图像，黑色作为背景，白色作为目标），轮廓检索方式，
         contours = imutils.grab_contours(contours)  # 适配不同的 opencv 版本
         contours = sorted(contours, key=len, reverse=True)
@@ -132,11 +132,17 @@ def find_contours_img(img_raw, img_opened, mask_binary):
 
         length, width = np.max(rects[ii][1]), np.min(rects[ii][1])
         area = cv2.contourArea(contours[0])
-        similarity = cv2.matchShapes(contours_mask, contours[0], 1, 0.0)
+        # 整体轮廓相似度
+        similarity_overall = cv2.matchShapes(contours_mask, contours[0], 1, 0.0)
+        # 胶囊头部、尾部相似度
+        similarity_head =  cv2.matchShapes(contours_mask[:int(0.20*contours_mask.shape[0]), :, :],
+                                         contours[0][:int(0.20*contours[0].shape[0]), :, :] , 1, 0.0)
+        similarity_tail =  cv2.matchShapes(contours_mask[int(0.80*contours_mask.shape[0]):, :, :],
+                                         contours[0][int(0.80*contours[0].shape[0]):, :, :] , 1, 0.0)
 
         capsule_size.append(np.array([length, width]))
         capsule_area.append(area)
-        capsule_similarity.append(similarity)
+        capsule_similarity.append([similarity_overall, similarity_head, similarity_tail])
         target_raw_copy = target_raw.copy()
         cv2.drawContours(target_raw_copy, contours, -1, (0, 255, 0), 3)
         # show_img("{}/{} capsules >> L: {:.2f} W: {:.2f} Area: {}".format(ii+1, len(rects), length, width, area), target_raw_copy)
@@ -146,7 +152,7 @@ def find_contours_img(img_raw, img_opened, mask_binary):
 
 
 
-def detect_local_defects(capsule_raw, capsule_opened, capsule_id):
+def detect_local_defects(capsule_raw, capsule_opened, local_defect_length, capsule_id):
     # (原图掩膜操作>>均值滤波>>滤波图像原图进行差分>>二值化>>查找轮廓(根据轮廓长度进行筛选)
     draw_image = capsule_raw.copy()
     capsule_masked = cv2.bitwise_and(draw_image, draw_image, mask=capsule_opened)  # 对原始图像进行掩码运算
@@ -177,7 +183,7 @@ def detect_local_defects(capsule_raw, capsule_opened, capsule_id):
         length = cv2.arcLength(contours[i], True)
         # info = info + ">>>>局部缺陷长度: {}".format(length)
         # 通过轮廓长度筛选
-        if 75 < length and max_length < length:
+        if local_defect_length <= length and max_length < length:
             max_length = length
             is_defect = True
             cv2.drawContours(img2, contours[i], -1, (0, 0, 255), 2)
@@ -189,7 +195,8 @@ def detect_local_defects(capsule_raw, capsule_opened, capsule_id):
 
 
 def capsule_defect_detection(capsule_set_raw, capsule_set_opened,  capsule_centers, capsule_size, capsule_area, capsule_similarity,
-                             nor_len_range=[310, 330], nor_area_range=[30500, 35000]):
+                             nor_len_range=[310, 330], nor_area_range=[30500, 35000],
+                             similarity_threshold=0.05, local_defect_length=75):
     """
     :param capsule_set_raw:    胶囊的裁剪图 原图
     :param capsule_set_opened: 胶囊的裁剪 二值图
@@ -197,12 +204,15 @@ def capsule_defect_detection(capsule_set_raw, capsule_set_opened,  capsule_cente
     :param capsule_size:       胶囊的尺寸
     :param capsule_area:       胶囊面积
     :param capsule_similarity: 胶囊的相似度
-    :param nor_len_range:      正常长度范围
-    :param nor_area_range:     正常面积范围
-
+    :param nor_len_range:      正常长度范围（范围内为正常）
+    :param nor_area_range:     正常面积范围（范围内为正常）
+    :param similarity_threshold: 相似度阈值（低于阈值为正常）
+    :param nor_area_range:     正常面积范围（低于阈值为正常）
     :return:
-
+        abnormal_capsule_centers:  异常胶囊中心坐标（像素点坐标）
+        all_capsule_centers:       所有胶囊中心坐标（像素点坐标）
     """
+
     abnormal_capsule_centers = []
     all_capsule_centers = []
     L, W, A, S = [], [], [], []  # 存储所有胶囊的长、宽、面积、轮廓相似度
@@ -228,16 +238,17 @@ def capsule_defect_detection(capsule_set_raw, capsule_set_opened,  capsule_cente
         info += ' >> Abnormal \n' if area < nor_area_range[0] or nor_area_range[1] < area else '\n'
 
         # 检测项目3：轮廓相似度比较 >> 0~1  越小越相似
-        similarity = capsule_similarity[ii]
-        info = info + ">>>>与 mask_binary 的轮廓相似度: {:.4f}".format(similarity)
-        if 0.1 < similarity:
+        similarity_overall, similarity_head, similarity_tail, = capsule_similarity[ii][0], capsule_similarity[ii][1],capsule_similarity[ii][2],
+        info = info + ">>>>与 mask_binary 的轮廓相似度: {:.4f},  {:.4f},  {:.4f}".format(similarity_overall, similarity_head, similarity_tail)
+        is_abnormal_similarity = similarity_threshold <= similarity_overall or 1.5 < similarity_head or 1.5 < similarity_tail
+        if is_abnormal_similarity:
             is_abnormal = True
-        info += ' >> Abnormal !\n' if 0.1 < similarity else '\n'
+        info += ' >> Abnormal !\n' if is_abnormal_similarity else '\n'
 
         # 检测项目4：局部缺陷检测
         capsule_opened = capsule_set_opened[ii]
-        info = info + ">>>>局部缺陷检测: "
-        is_defect, max_length = detect_local_defects(capsule_raw, capsule_opened, ii+1)
+        is_defect, max_length = detect_local_defects(capsule_raw, capsule_opened, local_defect_length, ii+1)
+        info = info + ">>>>局部缺陷检测最大长度: {:.4f}".format(max_length)
         if is_defect:
             is_abnormal = True
         info += ' >> Abnormal !\n' if is_defect else '\n'
@@ -253,7 +264,7 @@ def capsule_defect_detection(capsule_set_raw, capsule_set_opened,  capsule_cente
         L.append(length)
         W.append(width)
         A.append(area)
-        S.append(similarity)
+        S.append(similarity_overall)
     index = []
     index.append(L)
     index.append(W)
