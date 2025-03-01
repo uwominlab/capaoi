@@ -7,6 +7,8 @@ from PyQt5.QtGui import *
 from PyQt5.QtSvg import QSvgWidget
 from PyQt5 import QtWidgets
 
+from src.params import ROOT_DIR
+
 
 class CapsuleDetectionGUI(QMainWindow):
     def __init__(self):
@@ -22,7 +24,7 @@ class CapsuleDetectionGUI(QMainWindow):
 
     def initUI(self):
         # Logo和标题
-        self.setWindowIcon(QIcon(r"C:\Users\Rui Liu\Desktop\AAA\logo\logo.svg"))
+        self.setWindowIcon(QIcon(f"{ROOT_DIR}\\backup\\AAA\\logo\\logo.svg"))
         self.setWindowTitle('胶囊异常检测GUI')
         self.setGeometry(100, 100, 700, 500)
         self.setFixedSize(800, 500)
@@ -113,14 +115,14 @@ class CapsuleDetectionGUI(QMainWindow):
         return container
 
     def load_config_files(self):
-        config_dir = r"C:\Users\Rui Liu\Desktop\AAA\配置文件"
+        config_dir = f"{ROOT_DIR}\\backup\\AAA\\配置文件"
         if os.path.exists(config_dir):
             for f in os.listdir(config_dir):
                 if f.endswith(".txt"):
                     self.config_combo.addItem(f)
 
     def load_config_param(self):
-        config_path = f"C:\\Users\\Rui Liu\\Desktop\\AAA\\配置文件\\{self.config_combo.currentText()}"
+        config_path = f"{ROOT_DIR}\\backup\\AAA\\配置文件\\{self.config_combo.currentText()}"
         if not os.path.exists(config_path):
             return
         self.param_table.setRowCount(0)
@@ -156,7 +158,7 @@ class CapsuleDetectionGUI(QMainWindow):
             self.param_table.setEditTriggers(QTableWidget.AllEditTriggers)  # 设置可编辑
 
     def load_images(self):
-        img_dir = r"C:\Users\Rui Liu\Desktop\AAA\Figs"
+        img_dir = f"{ROOT_DIR}\\backup\\AAA\\Figs"
         self.image_files = [os.path.join(img_dir, f)
                             for f in os.listdir(img_dir) if f.endswith(".png")]
         self.current_image_index = 0
@@ -199,12 +201,7 @@ class CapsuleDetectionGUI(QMainWindow):
 
             # print(f"数据已保存到 {file_path}")
 
-
-
-
         return None
-
-
 
 
 if __name__ == '__main__':
