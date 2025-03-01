@@ -6,8 +6,9 @@ This module contains the main window of the application.
 """
 
 import sys
+
 from PySide6.QtGui import QResizeEvent, QCloseEvent
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt6.QtWidgets import QApplication, QMainWindow
 
 
 class MainWindow(QMainWindow):
@@ -22,7 +23,6 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         # Set the window title
-        self.setWindowTitle("PyQt5 App")
 
     def resizeEvent(self, event: QResizeEvent) -> None:
         """
@@ -38,11 +38,14 @@ class MainWindow(QMainWindow):
 
 
 def main():
-    app = QApplication(sys.argv)
-    window = MainWindow()
+    """Tests miscellaneous event handlers.
+    """
+    app: QApplication = QApplication(sys.argv)
+    window: MainWindow = MainWindow()
     window.resize(800, 600)
     window.show()
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()
