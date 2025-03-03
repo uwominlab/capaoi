@@ -131,26 +131,53 @@ def main() -> None:
             GRABBING_TIMEOUT_MS, pylon.TimeoutHandling_ThrowException)
 
         if grab_result.GrabSucceeded():
-            image = grab_result.Array
+            pylon_image = converter.Convert(grab_result)
+            image = pylon_image.GetArray()
 
-            assert image is not None
-            assert image.ndim == 2
-            assert image.shape == (INIT_HEIGHT, INIT_WIDTH)
+            # Image is a 2D matrix (2-channel image), not a traditional cv2.typing.MatLike
+            if isinstance(image, np.ndarray) and image.shape[-1] == 2:
+                # Extract first channel
+                image = image[:, :, 0]
+                # Convert to RGB
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
 
-            grab_time: float = time.time()
+            # Obtain the processed copy of the image
+            img_opened: cv2.typing.MatLike = get_img_opened(image)
 
-            # TODO: detect if there are defects in capsules
-            # is_fault,fault_coord = defect_diagnose(image)
-            process_time: float = time.time()
+            # Find the contours in the image
+            _, capsule_set_raw, capsule_set_opened, _, \
+                capsule_centers, capsule_size, capsule_area, capsule_similarity = find_contours_img(
+                    image, img_opened, MASK_BIN)
 
-            # while is_fault:
-            #     for coord in fault_coord:
-            #         delay_time = (conveyer_len+coord)/conveyer_rate - (process_time-grab_time) + calib_time
-            #         threading.Thread(target=start_blowing, args=(client, output_address, delay_time), daemon=True).start()
-            cv2.imshow(winname="Processed Image", mat=image)
+            # Detect the defective capsules
+            capsule_centers_abnormal = detect_capsule_defects(
+                capsule_set_raw, capsule_set_opened, capsule_centers,
+                capsule_size, capsule_area, capsule_similarity)
 
-            print(count)
-            count += 1
+            # Get current timestamp in seconds
+            current_time_s: float = time.time()
+
+            # Calculate absolute actuation timestamps
+            abs_actuation_timestamps += [
+                current_time_s +
+                ((INIT_WIDTH - center[0]) * MM_PER_PIXEL +
+                 BELT_LENGTH_MM) / BELT_SPEED_MM_S
+                for center in capsule_centers_abnormal
+            ]
+
+            # Check if the relay should be actuated by
+            # comparing the current time with the actuation timestamps
+            if abs_actuation_timestamps and \
+                    min(abs_actuation_timestamps) <= current_time_s <= max(abs_actuation_timestamps):
+                # relay_controller.turn_on(relay_number=RELAY_1)
+                # Remove the executed timestamp
+                abs_actuation_timestamps.pop(0)
+            else:
+                # relay_controller.turn_off(relay_number=RELAY_1)
+                pass
+
+            abs_actuation_timestamps = [
+                timestamp for timestamp in abs_actuation_timestamps if timestamp >= current_time_s]
 
             # press 'ESC' to exit the loop
             key = cv2.waitKey(1)
