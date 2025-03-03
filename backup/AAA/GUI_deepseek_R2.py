@@ -107,13 +107,6 @@ class CapsuleDetectionGUI(QMainWindow):
         # 右侧布局中，多个容器严格从上到下紧凑分布，不因窗口变小/变大而压缩或拉伸！
         right_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
-    def create_dual_input(self, *widgets):
-        container = QWidget()
-        layout = QHBoxLayout(container)
-        for w in widgets:
-            layout.addWidget(w)
-        return container
-
     def load_config_files(self):
         config_dir = f"{ROOT_DIR}\\backup\\AAA\\配置文件"
         if os.path.exists(config_dir):
