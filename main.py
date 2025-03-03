@@ -179,6 +179,33 @@ def main() -> None:
             abs_actuation_timestamps = [
                 timestamp for timestamp in abs_actuation_timestamps if timestamp >= current_time_s]
 
+            # Assertions and visualization
+            if DEBUG_MODE:
+                if not USE_EMULATION:
+                    assert image is not None
+                    assert image.ndim == 3
+                    assert image.shape == (INIT_HEIGHT, INIT_WIDTH, 3)
+
+                points: list[tuple[int, int]] = [
+                    (int(x), int(y)) for x, y in capsule_centers
+                ]
+                for index, point in enumerate(points):
+                    # Draw a green filled circle
+                    cv2.putText(
+                        img=image, text=str(index), org=(point[0], point[1]),
+                        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                        fontScale=2, color=(255, 0, 0), thickness=2)
+
+                points = [(int(x), int(y))
+                          for x, y in capsule_centers_abnormal]
+                for index, point in enumerate(points):
+                    # Draw a red filled circle
+                    cv2.circle(
+                        img=image, center=point, radius=5,
+                        color=(0, 0, 255), thickness=5)
+
+                cvimshow("Defects Dectection Results", image)
+
             # press 'ESC' to exit the loop
             key = cv2.waitKey(1)
             if key == 27:
