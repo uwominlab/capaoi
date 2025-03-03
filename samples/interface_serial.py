@@ -25,6 +25,8 @@ try:
 
     print("Port is open:", ser.is_open)
 
+    ser.dtr = True
+
     # Send data
     ser.write(b'Hello RS232\n')
     time.sleep(1)
