@@ -46,7 +46,8 @@ logging.basicConfig(
 
 # Initialize the constant variables
 MASK_IMG_PATH: str = "./data/Figs_14/000_mask_raw.png"
-MASK_RAW: cv2.typing.MatLike = cv2.imread(MASK_IMG_PATH)  # pylint: disable=no-member
+# pylint: disable=no-member
+MASK_RAW: cv2.typing.MatLike = cv2.imread(MASK_IMG_PATH)
 MASK_BIN: cv2.typing.MatLike = get_img_opened(MASK_RAW)
 
 if USE_EMULATION:
@@ -121,6 +122,7 @@ def main() -> None:
     capsule_centers_abnormal: list[tuple[int, int]]
 
     abs_actuation_timestamps: list[float] = []
+    relay_controller: RelayController = RelayController()
 
     # Loop until the camera stops grabbing and throws an exception
     while camera.IsGrabbing():
@@ -139,6 +141,7 @@ def main() -> None:
                 # Extract first channel
                 image = image[:, :, 0]
                 # Convert to RGB
+                # pylint: disable=no-member
                 image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
 
             # Obtain the processed copy of the image
@@ -169,12 +172,11 @@ def main() -> None:
             # comparing the current time with the actuation timestamps
             if abs_actuation_timestamps and \
                     min(abs_actuation_timestamps) <= current_time_s <= max(abs_actuation_timestamps):
-                # relay_controller.turn_on(relay_number=RELAY_1)
+                relay_controller.turn_on(relay_number=RELAY_1)
                 # Remove the executed timestamp
                 abs_actuation_timestamps.pop(0)
             else:
-                # relay_controller.turn_off(relay_number=RELAY_1)
-                pass
+                relay_controller.turn_off(relay_number=RELAY_1)
 
             abs_actuation_timestamps = [
                 timestamp for timestamp in abs_actuation_timestamps if timestamp >= current_time_s]
@@ -216,6 +218,7 @@ def main() -> None:
     # Close the camera and release resources
     camera.StopGrabbing()
     camera.Close()
+    relay_controller.release()
     cv2.destroyAllWindows()
 
 
