@@ -12,6 +12,7 @@ import logging
 import os
 import sys
 import time
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -22,10 +23,12 @@ from PyQt6.QtWidgets import QApplication
 
 from src.contours import find_contours_img
 from src.defects import detect_capsule_defects
-from src.params import (
-    BELT_LENGTH_MM, BELT_SPEED_MM_S, GRABBING_TIMEOUT_MS,
-    INIT_EXPOSURE_TIME, INIT_FRAME_RATE, INIT_GAIN,
-    INIT_HEIGHT, INIT_WIDTH, MM_PER_PIXEL, RELAY_1, ACTUATOR_RETRACTION_TIME, ROOT_DIR)
+
+from src.params import BELT_LENGTH_MM, BELT_SPEED_MM_S
+from src.params import GRABBING_TIMEOUT_MS, INIT_EXPOSURE_TIME, INIT_FRAME_RATE, INIT_GAIN
+from src.params import INIT_HEIGHT, INIT_WIDTH, MM_PER_PIXEL
+from src.params import ACTUATOR_RETRACTION_TIME
+from src.params import ROOT_DIR
 
 from src.main_window import MainWindow
 from src.relay_controller import RelayController
@@ -45,7 +48,7 @@ logging.basicConfig(
 )
 
 # Initialize the constant variables
-MASK_IMG_PATH: str = "./data/Figs_14/000_mask_raw.png"
+MASK_IMG_PATH: str = os.path.join(ROOT_DIR, "data", "Figs_14", "000_mask_raw.png")
 # pylint: disable=no-member
 MASK_RAW: cv2.typing.MatLike = cv2.imread(MASK_IMG_PATH)
 MASK_BIN: cv2.typing.MatLike = get_img_opened(MASK_RAW)
@@ -181,6 +184,7 @@ def main() -> None:
             abs_actuation_timestamps = [
                 timestamp for timestamp in abs_actuation_timestamps if timestamp >= current_time_s]
 
+            if abs_actuation_timestamps and \
             # Assertions and visualization
             if DEBUG_MODE:
                 if not USE_EMULATION:
