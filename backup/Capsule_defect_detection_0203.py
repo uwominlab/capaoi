@@ -1,3 +1,6 @@
+import os
+from src.params import ROOT_DIR
+
 import cv2
 import numpy as np
 import imutils
@@ -5,6 +8,8 @@ import time
 import matplotlib.pyplot as plt
 from PIL import Image
 plt.rcParams['figure.dpi'] = 300   # 图形的DPI
+
+os.path.join(ROOT_DIR)
 
 
 def show_img(img_name, img):
@@ -187,8 +192,8 @@ def detect_local_defects(capsule_raw, capsule_opened, local_defect_length, capsu
             max_length = length
             is_defect = True
             cv2.drawContours(img2, contours[i], -1, (0, 0, 255), 2)
-    if is_defect:
-        show_img("local_defects of {}-th capsule".format(capsule_id), img2)
+    # if is_defect:
+    #     show_img("local_defects of {}-th capsule".format(capsule_id), img2)
 
     return is_defect, max_length
 
@@ -277,11 +282,11 @@ def capsule_defect_detection(capsule_set_raw, capsule_set_opened,  capsule_cente
 
 if __name__ == "__main__":
     start_time = time.time()
-    img_path = 'Figs_0203/002.bmp'
+    img_path = 'data/Figs_0203/002.bmp'
     img_raw = cv2.imread(img_path)
     # show_img("img_raw", img_raw)
 
-    mask_img_path = 'Figs_0203/000_mask_raw.png'
+    mask_img_path = 'data/Figs_0203/000_mask_raw.png'
     mask_raw = cv2.imread(mask_img_path)
     _, mask_binary = img_preprocessing(mask_raw)
 
