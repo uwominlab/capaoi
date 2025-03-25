@@ -1,0 +1,33 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+    ],
+    "settings": {
+        "python.analysis.autoImportCompletions": true,
+        "python.analysis.completeFunctionParens": true,
+        "python.analysis.diagnosticMode": "workspace",
+        "python.analysis.generateWithTypeAnnotation": true,
+        "python.analysis.inlayHints.functionReturnTypes": true,
+        "python.analysis.inlayHints.callArgumentNames": "partial",
+        "python.analysis.inlayHints.variableTypes": true,
+        "python.analysis.inlayHints.pytestParameters": true,
+        "python.analysis.languageServerMode": "full",
+        "python.analysis.supportDocstringTemplate": true,
+        "python.analysis.typeCheckingMode": "standard",
+        "python.analysis.typeEvaluation.enableReachabilityAnalysis": true,
+        "python.analysis.typeEvaluation.enableExperimentalFeatures": true,
+        "editor.defaultFormatter": "ms-python.autopep8",
+        "jupyter.exportWithOutputEnabled": true,
+        "restructuredtext.pythonRecommendation.disabled": true,
+        "debugpy.showPythonInlineValues": true,
+        "python.testing.unittestEnabled": true,
+        "python.testing.pytestEnabled": true,
+        "python.envFile": "",
+        "python.analysis.typeEvaluation.strictDictionaryInference": true,
+        "python.analysis.typeEvaluation.strictListInference": true,
+        "python.analysis.typeEvaluation.strictSetInference": true,
+        "editor.inlayHints.enabled": "offUnlessPressed"
+    }
+}
