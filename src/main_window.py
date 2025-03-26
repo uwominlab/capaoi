@@ -7,8 +7,8 @@ This module contains the main window of the application.
 
 import sys
 
-from PySide6.QtGui import QResizeEvent, QCloseEvent
 from PyQt6.QtWidgets import QApplication, QMainWindow
+from PyQt6.QtGui import QIcon, QImage, QPixmap, QCloseEvent, QResizeEvent
 
 
 class MainWindow(QMainWindow):
