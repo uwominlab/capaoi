@@ -32,3 +32,27 @@ INIT_HEIGHT: int = 1440
 
 GRABBING_TIMEOUT_MS: int = 5000
 
+FOV_WIDTH_MM: int = 119
+# FOV_HEIGHT_MM: int = 100
+MM_PER_PIXEL: float = FOV_WIDTH_MM / INIT_WIDTH
+
+# Belt hyper parameters
+BELT_LENGTH_MM: int = 100
+BELT_SPEED_MM_S: int = 50
+
+# Relay parameter
+VENDOR_ID: Annotated[int, "16-bit unsigned"] = 0x16C0
+PRODUCT_ID: Annotated[int, "16-bit unsigned"] = 0x05DF
+
+# Relay will switch to Normally Open (NO) position
+RELAY_ON: Annotated[int, "16-bit unsigned"] = 0xFF
+
+# Relay will switch to Normally Closed (NC) position
+RELAY_OFF: Annotated[int, "16-bit unsigned"] = 0xFC
+
+RELAY_1: Annotated[int, "16-bit unsigned"] = 0x01
+RELAY_2: Annotated[int, "16-bit unsigned"] = 0x01 + 1
+RELAY_3: Annotated[int, "16-bit unsigned"] = 0x01 + 2
+RELAY_4: Annotated[int, "16-bit unsigned"] = 0x01 + 3
+
+ACTUATOR_RETRACTION_TIME: float = 1.0

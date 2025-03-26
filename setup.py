@@ -8,7 +8,7 @@
 from setuptools import setup, find_packages
 
 
-with open("requirements.txt", "r") as f:
+with open("requirements.txt", mode="r", encoding="utf-8") as f:
     requirements: list[str] = [
         line.strip()
         for line in f
@@ -19,7 +19,7 @@ with open("requirements.txt", "r") as f:
 setup(
     name="capaoi",
     version="1.0.0",
-    author="Xia Min, Rui Liu, Xuhua Huang and al.",
+    author="Dr. Xia Min, Dr. Rui Liu, Xuhua Huang and al.",
     author_email="rliu737@uwo.ca, xhuan484@uwo.ca",
     description=(
         "An industrial Automatic Optical Inspection project for capsules"
