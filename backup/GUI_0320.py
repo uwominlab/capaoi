@@ -21,6 +21,7 @@ class CapsuleDetectionGUI(QMainWindow):
         self.check_for_new_files()
         self.update_time()
         self.update_count()
+        # self.get_bgc_ranges()
 
     def initUI(self):
         # Logo和标题
@@ -254,6 +255,8 @@ class CapsuleDetectionGUI(QMainWindow):
                 item.setFlags(item.flags() & ~Qt.ItemIsEditable)  # 移除可编辑标志
         # 解析完参数后，按时 按钮可点击
         self.start_btn.setEnabled(True)
+        # 背景色
+        self.get_bgc_ranges()
 
 
     def start_detection(self):
@@ -387,6 +390,14 @@ class CapsuleDetectionGUI(QMainWindow):
                 QMessageBox.warning(self, "验证失败", "密码错误")
                 self.toggle_params_checkbox.setChecked(False)  # 取消勾选
 
+    def get_bgc_ranges(self):
+        print(self.capsule_param_table.item(0, 1))
+        B_val_lower, B_val_upper = int(self.capsule_param_table.item(0, 1).text()), int(self.capsule_param_table.item(0, 2).text())
+        G_val_lower, G_val_upper = int(self.capsule_param_table.item(1, 1).text()), int(self.capsule_param_table.item(1, 2).text())
+        R_val_lower, R_val_upper = int(self.capsule_param_table.item(2, 1).text()), int(self.capsule_param_table.item(2, 2).text())
+        self.bgc_ranges = {"bgc": ([B_val_lower, G_val_lower, R_val_lower],
+                                   [B_val_upper, G_val_upper, R_val_upper])}
+        print(self.bgc_ranges)
 
     def obtain_screen_resolution(self):
         """获取当前窗口所在的屏幕 """
@@ -400,21 +411,13 @@ class CapsuleDetectionGUI(QMainWindow):
 
 
 if __name__ == '__main__':
-    try:
-        app = QApplication(sys.argv)
-        # ✅ 获取 DPI 缩放比例
-        desktop = QApplication.desktop()  # 获取桌面管理器
-        screen_num = desktop.screenNumber()  # 获取窗口当前所在的屏幕编号
-        screen = desktop.screen(screen_num)  # 获取对应的屏幕
-        dpi = screen.logicalDpiX()  # 获取 DPI
-        scale_factor = dpi / 96  # 以标准 96 DPI 计算缩放比例
-        print('dpi:', dpi, 'scale:', scale_factor)
+    # try:
+    app = QApplication(sys.argv)
+    window = CapsuleDetectionGUI()
+    window.show()
 
-        app.setAttribute(Qt.AA_EnableHighDpiScaling, True)  # 让 Qt 进行 DPI 缩放
-        app.setAttribute(Qt.AA_UseHighDpiPixmaps, True)  # 让图片也进行 DPI 缩放
+    sys.exit(app.exec_())
 
-        window = CapsuleDetectionGUI()
-        window.show()
-        sys.exit(app.exec_())
-    except Exception as e:
-        print(f"检查新文件时出错: {e}")
+
+    # except Exception as e:
+    #     print(f"检查新文件时出错: {e}")
