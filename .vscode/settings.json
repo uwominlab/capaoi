@@ -1,0 +1,5 @@
+{
+    "cmake.sourceDirectory": "${workspaceFolder}/samples",
+    "cmake.buildDirectory": "${workspaceFolder}/samples/build/",
+    "editor.inlayHints.enabled": "offUnlessPressed"
+}
