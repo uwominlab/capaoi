@@ -5,7 +5,7 @@ SCALE_X: float = 0.25  # Scale factor for width
 SCALE_Y: float = 0.25  # Scale factor for height
 
 # Load the image
-image: np.ndarray = cv2.imread(filename='../data/Figs_14/006.bmp')
+image: np.ndarray = cv2.imread(filename='data/Figs_14/006.bmp')
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 # Preprocessing

@@ -141,7 +141,7 @@ class CapsuleDetectionGUI(QMainWindow):
 
     def load_config_files(self):
         """加载 '配置文件' 目录下的 txt 文件到下拉框"""
-        self.config_dir = r"Configuration files"
+        self.config_dir: str = r"Configuration files"
         if os.path.exists(self.config_dir):
             txt_files = {f for f in os.listdir(self.config_dir) if f.endswith(".txt")}
             self.current_txt_files = txt_files  # 记录当前文件列表
@@ -365,7 +365,7 @@ class CapsuleDetectionGUI(QMainWindow):
 
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         app = QApplication(sys.argv)
         # ✅ 获取 DPI 缩放比例

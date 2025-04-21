@@ -8,7 +8,7 @@ from utils.transform import preprocess_image
 
 # %%
 # Load the image
-image: np.ndarray = cv2.imread(filename='../data/Figs_14/006.bmp')
+image: np.ndarray = cv2.imread(filename='data/Figs_14/006.bmp')
 
 # Preprocess the image
 processed_image: np.ndarray = preprocess_image(image)

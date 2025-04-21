@@ -116,5 +116,5 @@ class TestRelayController(unittest.TestCase):
             self.assertEqual(fake_device.ctrl_transfer.call_count, 4)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

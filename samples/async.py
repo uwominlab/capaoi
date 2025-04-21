@@ -29,5 +29,5 @@ async def main():
         print(f"Elapsed time: {elapsed_time:.6f} seconds")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(main())
