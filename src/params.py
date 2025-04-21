@@ -16,7 +16,13 @@ ROOT_DIR: Path = Path(__file__).parent.parent.resolve()
 # Define global paths
 DATA_DIR: Path = ROOT_DIR / 'data'
 BACKUP_DIR: Path = ROOT_DIR / 'backup'
+LOG_DIR: Path = ROOT_DIR / 'logs'
 
+DEFAULT_EXPOSURE_TIME: int = 5000
+DEFAULT_FRAME_RATE: int = 100
+DEFAULT_WIDTH: int = 4200
+DEFAULT_HEIGHT: int = 2128
+DEFAULT_OFFSET_Y: int = 16
 
 # Camera image hyper parameters
 INIT_EXPOSURE_TIME: int = 12490
