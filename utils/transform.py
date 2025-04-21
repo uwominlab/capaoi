@@ -10,13 +10,52 @@ import cv2
 import numpy as np
 
 
+def generate_background_mask(image_rgb: np.ndarray, bgc_ranges: dict) -> np.ndarray:
+    """
+    Generates a combined background mask for the specified RGB ranges.
+    
+    Parameters:
+        image_rgb (np.ndarray): RGB image.
+        bgc_ranges (dict): Dictionary of color names to (lower, upper) RGB range tuples.
+    
+    Returns:
+        np.ndarray: Combined binary mask for all specified background ranges.
+    """
+    combined_mask: np.ndarray = np.zeros(image_rgb.shape[:2], dtype=np.uint8)
+    for lower, upper in bgc_ranges.values():
+        lower_np = np.array(lower, dtype=np.uint8)
+        upper_np = np.array(upper, dtype=np.uint8)
+        mask = cv2.inRange(image_rgb, lower_np, upper_np)
+        combined_mask = cv2.bitwise_or(combined_mask, mask)
+    return combined_mask
+
+
+def remove_background(img_bgr: np.ndarray, bgc_ranges: dict) -> np.ndarray:
+    """
+    Removes background colors from an image using specified RGB ranges.
+
+    Parameters:
+        img_bgr (np.ndarray): Original BGR image.
+        bgc_ranges (dict): Dictionary mapping color names to (lower, upper) RGB tuples.
+
+    Returns:
+        np.ndarray: BGR image with background pixels set to black.
+    """
+    img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+    background_mask = generate_background_mask(img_rgb, bgc_ranges)
+    foreground_mask = cv2.bitwise_not(background_mask)
+    img_bgr_no_bg = cv2.bitwise_and(img_bgr, img_bgr, mask=foreground_mask)
+    return img_bgr_no_bg
+
+
 def cut_image_by_box(img: cv2.typing.MatLike, points: np.ndarray) -> cv2.typing.MatLike:
     """
-    Extracts a region from the input image based on a given quadrilateral box (four points in clockwise order).
+    Extracts a region from the input image based on a given quadrilateral box
+    (four points in clockwise order).
 
     Parameters:
         img (np.ndarray): The input image.
-        points (np.ndarray): A 4x2 array of float32 representing the quadrilateral's corner points 
+        points (np.ndarray): A 4x2 array of float32 representing the quadrilateral's corner points
                              in clockwise order [[x1, y1], [x2, y2], [x3, y3], [x4, y4]].
 
     Returns:
@@ -25,7 +64,7 @@ def cut_image_by_box(img: cv2.typing.MatLike, points: np.ndarray) -> cv2.typing.
     Raises:
         ValueError: If the input points do not form a (4, 2) array.
     """
-    points = np.float32(points)  # Ensure the points are in the correct dtype
+    points = points.astype(np.float32)  # Ensure correct dtype
     if points.shape != (4, 2):
         raise ValueError(
             "Points must be a 4x2 array representing four corners of a quadrilateral.")
@@ -69,9 +108,14 @@ def get_img_opened(img_raw: cv2.typing.MatLike) -> cv2.typing.MatLike:
     """
     img_gray: cv2.typing.MatLike = cv2.cvtColor(img_raw, cv2.COLOR_BGR2GRAY)
     _, img_binary = cv2.threshold(img_gray, 125, 255, cv2.THRESH_BINARY)
+
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    img_closed: cv2.typing.MatLike = cv2.morphologyEx(img_binary, cv2.MORPH_CLOSE, kernel)
-    img_opened: cv2.typing.MatLike = cv2.morphologyEx(img_closed, cv2.MORPH_OPEN, kernel)
+
+    img_closed: cv2.typing.MatLike = cv2.morphologyEx(
+        img_binary, cv2.MORPH_CLOSE, kernel)
+    img_opened: cv2.typing.MatLike = cv2.morphologyEx(
+        img_closed, cv2.MORPH_OPEN, kernel)
+
     return img_opened
 
 
