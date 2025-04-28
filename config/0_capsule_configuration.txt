@@ -1,0 +1,9 @@
+Contour Length Threshold TL (pixel): 310-330
+Contour Area Threshold TA (pixel): 31,500-33,000
+Overall Contour Similarity Threshold TST: 0-0.05
+Head Contour Similarity Threshold TSH: 0-1.5
+Local Defect Length Threshold TDL (pixel): 0-75
+Distance from Actuator to Field of View End L (mm): 500
+Actuator Height H (mm): 300
+Shortest Actuator Reset Interval T (s): 0.2
+Actuator Response Delay D (s): 0.2
