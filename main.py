@@ -18,6 +18,7 @@ import numpy as np
 from pypylon import pylon
 
 # pylint: disable=no-name-in-module
+from PyQt6.QtCore import QSettings
 from PyQt6.QtWidgets import QApplication
 
 from src.contours import find_contours_img
@@ -232,6 +233,22 @@ def main() -> None:
     camera.Close()
     # relay_controller.release()
     cv2.destroyAllWindows()
+
+    settings: QSettings = QSettings("MinLab", "CapAOI")
+    settings.setValue("camera/debug", True)
+    settings.setValue("defect/debug", True)
+    settings.setValue("relay1/debug", True)
+
+    # Create the main window and run the application
+    app: QApplication = QApplication(sys.argv)
+    app.setApplicationName("Capsule Defects Detection")
+    app.setApplicationVersion("1.0")
+    app.setOrganizationName("The University of Western Ontario")
+    app.setOrganizationDomain("uwo.ca")
+    window: MainWindow = MainWindow()
+    window.resize(1280, 940)
+    window.show()
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
