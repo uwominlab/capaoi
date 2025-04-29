@@ -27,11 +27,11 @@ from src.defects import detect_capsule_defects
 from src.params import BELT_LENGTH_MM, BELT_SPEED_MM_S
 from src.params import GRABBING_TIMEOUT_MS, INIT_EXPOSURE_TIME, INIT_FRAME_RATE, INIT_GAIN
 from src.params import INIT_HEIGHT, INIT_WIDTH, MM_PER_PIXEL
-from src.params import ACTUATOR_RETRACTION_TIME
+# from src.params import ACTUATOR_RETRACTION_TIME
 from src.params import ROOT_DIR
 
 from src.main_window import MainWindow
-from src.relay_controller import RelayController
+# from src.relay_controller import RelayController
 
 from utils.transform import get_img_opened
 from utils.visualize import cvimshow
@@ -72,14 +72,20 @@ def main() -> None:
     except (pylon.GenericException, RuntimeError) as e:
         logging.error("Error retrieving frame %s", e)
 
-    camera.Open()
+    try:
+        camera.Open()
+    except UnboundLocalError as e:
+        logging.error("Error opening camera %s", e)
+        return
 
     # Set camera related paramters
-    camera.ExposureTime.Value = INIT_EXPOSURE_TIME
-    camera.AcquisitionFrameRateEnable.Value = True
-    camera.AcquisitionFrameRate.SetValue(INIT_FRAME_RATE)
-    camera.AcquisitionMode.SetValue("Continuous")
-    camera.Gain.SetValue(INIT_GAIN)
+    camera.UserSetSelector.SetValue("Default")
+    camera.UserSetLoad.Execute()
+    # camera.ExposureTime.Value = INIT_EXPOSURE_TIME
+    # camera.AcquisitionFrameRateEnable.Value = True
+    # camera.AcquisitionFrameRate.SetValue(INIT_FRAME_RATE)
+    # camera.AcquisitionMode.SetValue("Continuous")
+    # camera.Gain.SetValue(INIT_GAIN)
 
     camera.Width.SetValue(INIT_WIDTH)
     camera.Height.SetValue(INIT_HEIGHT)
@@ -121,11 +127,11 @@ def main() -> None:
     # Explicitly declaring an array helps reducing processing time in blocking polling loop
     grab_result: pylon.GrabResult
     pylon_image: pylon.PylonImage
-    image: np.ndarray[np.uint8]
+    image: np.ndarray
     capsule_centers_abnormal: list[tuple[int, int]]
 
     abs_actuation_timestamps: list[float] = []
-    relay_controller: RelayController = RelayController()
+    # relay_controller: RelayController = RelayController()
 
     # Loop until the camera stops grabbing and throws an exception
     while camera.IsGrabbing():
@@ -151,9 +157,9 @@ def main() -> None:
             img_opened: cv2.typing.MatLike = get_img_opened(image)
 
             # Find the contours in the image
-            _, capsule_set_raw, capsule_set_opened, _, \
-                capsule_centers, capsule_size, capsule_area, capsule_similarity = find_contours_img(
-                    image, img_opened, MASK_BIN)
+            capsule_set_raw, capsule_set_opened, \
+                capsule_centers, capsule_size, capsule_area, capsule_similarity \
+                = find_contours_img(image, img_opened, MASK_BIN)
 
             # Detect the defective capsules
             capsule_centers_abnormal = detect_capsule_defects(
@@ -175,25 +181,26 @@ def main() -> None:
             # comparing the current time with the actuation timestamps
             if abs_actuation_timestamps and \
                     min(abs_actuation_timestamps) <= current_time_s <= max(abs_actuation_timestamps):
-                relay_controller.turn_on(relay_number=RELAY_1)
+                # relay_controller.turn_on(relay_number=RELAY_1)
                 # Remove the executed timestamp
                 abs_actuation_timestamps.pop(0)
             else:
-                relay_controller.turn_off(relay_number=RELAY_1)
+                # relay_controller.turn_off(relay_number=RELAY_1)
+                pass
 
             abs_actuation_timestamps = [
                 timestamp for timestamp in abs_actuation_timestamps if timestamp >= current_time_s]
 
-            if abs_actuation_timestamps and \
-                current_time_s + ACTUATOR_RETRACTION_TIME < min(abs_actuation_timestamps):
-                relay_controller.turn_off(relay_number=RELAY_1)
+            # if abs_actuation_timestamps and \
+            #     current_time_s + ACTUATOR_RETRACTION_TIME < min(abs_actuation_timestamps):
+            #     relay_controller.turn_off(relay_number=RELAY_1)
 
             # Assertions and visualization
             if DEBUG_MODE:
-                if not USE_EMULATION:
-                    assert image is not None
-                    assert image.ndim == 3
-                    assert image.shape == (INIT_HEIGHT, INIT_WIDTH, 3)
+                # if not USE_EMULATION:
+                #     assert image is not None
+                #     assert image.ndim == 3
+                #     assert image.shape == (INIT_HEIGHT, INIT_WIDTH, 3)
 
                 points: list[tuple[int, int]] = [
                     (int(x), int(y)) for x, y in capsule_centers
@@ -225,7 +232,7 @@ def main() -> None:
     # Close the camera and release resources
     camera.StopGrabbing()
     camera.Close()
-    relay_controller.release()
+    # relay_controller.release()
     cv2.destroyAllWindows()
 
 
