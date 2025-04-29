@@ -107,14 +107,14 @@ def get_img_opened(img_raw: cv2.typing.MatLike) -> cv2.typing.MatLike:
         cv2.typing.MatLike: The processed image after applying the morphological operations.
     """
     img_gray: cv2.typing.MatLike = cv2.cvtColor(img_raw, cv2.COLOR_BGR2GRAY)
-    _, img_binary = cv2.threshold(img_gray, 125, 255, cv2.THRESH_BINARY)
 
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    img_gray = cv2.medianBlur(img_gray, 15)
+    img_binary = cv2.inRange(img_gray, 1, 255)
 
-    img_closed: cv2.typing.MatLike = cv2.morphologyEx(
-        img_binary, cv2.MORPH_CLOSE, kernel)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 11))
+
     img_opened: cv2.typing.MatLike = cv2.morphologyEx(
-        img_closed, cv2.MORPH_OPEN, kernel)
+        img_binary, cv2.MORPH_OPEN, kernel)
 
     return img_opened
 
