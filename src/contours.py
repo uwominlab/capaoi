@@ -10,7 +10,6 @@ import numpy as np
 from imutils import grab_contours
 
 from utils.transform import cut_image_by_box
-# from utils.visualize import cvimshow
 
 
 CONTOURS_DETECTION_DEBUG: bool = True
@@ -68,16 +67,16 @@ def find_contours_img(
         boxs.append(box)
 
     # Visualization (optional)
-    # if CONTOURS_DETECTION_DEBUG:
-    #     draw_img = img_raw.copy()
-    #     draw_img = cv2.drawContours(draw_img, boxs, -1, (0, 0, 255), 2)
-    #     for index, center in enumerate(capsule_centers):
-    #         cv2.circle(draw_img, (int(center[0]), int(
-    #             center[1])), 10, (0, 255, 0), -1)
-    #         cv2.putText(draw_img, str(index + 1),
-    #             (int(center[0]), int(center[1])),
-    #             cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 2)
-    #     cvimshow("Detected Capsules", draw_img)
+    if CONTOURS_DETECTION_DEBUG:
+        draw_img = img_raw.copy()
+        draw_img = cv2.drawContours(draw_img, boxs, -1, (0, 0, 255), 2)
+        for index, center in enumerate(capsule_centers):
+            cv2.circle(draw_img, (int(center[0]), int(
+                center[1])), 10, (0, 255, 0), -1)
+            cv2.putText(draw_img, str(index + 1),
+                (int(center[0]), int(center[1])),
+                cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 2)
+        cv2.imwrite("Detected_Capsules.png", draw_img)
 
     # Step 4: Import the mask of the standard capsule
     mask_overall = cv2.findContours(
@@ -126,7 +125,7 @@ def find_contours_img(
                 target_opened[:int(0.20 * target_opened.shape[0]), :], mask_head)
             _, similarity_tail = calculate_contours_similarity(
                 target_opened[int(0.80 * target_opened.shape[0]):, :], mask_tail)
-            area = cv2.contourArea(main_contour)
+            area: float = cv2.contourArea(main_contour)
 
             capsule_size.append(np.array([length, width]))
             capsule_area.append(area)
