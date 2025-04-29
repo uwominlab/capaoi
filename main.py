@@ -12,7 +12,6 @@ import logging
 import os
 import sys
 import time
-from pathlib import Path
 
 import cv2
 import numpy as np
@@ -48,17 +47,16 @@ logging.basicConfig(
 )
 
 # Initialize the constant variables
-MASK_IMG_PATH: str = os.path.join(ROOT_DIR, "data", "Figs_14", "000_mask_raw.png")
+MASK_IMG_PATH: str = os.path.join(
+    ROOT_DIR, "data", "Figs_14", "Capsule_1_mask_binary.png")
 # pylint: disable=no-member
-MASK_RAW: cv2.typing.MatLike = cv2.imread(MASK_IMG_PATH)
-MASK_BIN: cv2.typing.MatLike = get_img_opened(MASK_RAW)
+# MASK_RAW: cv2.typing.MatLike = cv2.imread(MASK_IMG_PATH)
+MASK_BIN: cv2.typing.MatLike = cv2.imread(MASK_IMG_PATH, cv2.IMREAD_GRAYSCALE)
 
 if USE_EMULATION:
     os.environ['PYLON_CAMEMU'] = '1'
 
 
-# pylint: disable=too-many-locals
-# pylint: disable=too-many-statements
 def main() -> None:
     """
     Main function to run the application.
