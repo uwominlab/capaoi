@@ -28,6 +28,7 @@
         "python.analysis.typeEvaluation.strictDictionaryInference": true,
         "python.analysis.typeEvaluation.strictListInference": true,
         "python.analysis.typeEvaluation.strictSetInference": true,
-        "editor.inlayHints.enabled": "offUnlessPressed"
+        "editor.inlayHints.enabled": "offUnlessPressed",
+        "editor.mouseWheelZoom": true
     }
 }
