@@ -166,18 +166,18 @@ class CapsuleDetectionGUI(QMainWindow):
         """加载 胶囊样品图片 与 解析参数文件"""
         config_path = f"Configuration files\\{self.config_combo.currentText()}"
         context = self.config_combo.currentText().strip(".txt").split("_")
-        capusle_type = context[0] + '_' + context[1]
-        capusle_figure_path = f"Configuration files\\Capsule display images\\" + capusle_type + ".png"
+        capsule_type = context[0] + '_' + context[1]
+        capsule_figure_path = f"Configuration files\\Capsule display images\\" + capsule_type + ".png"
 
         # 加载配置参数
-        if not os.path.exists(config_path) or not os.path.exists(capusle_figure_path):
+        if not os.path.exists(config_path) or not os.path.exists(capsule_figure_path):
             self.capsule_figure_zone.clear()
             self.capsule_param_table.setRowCount(0)  # 清空表格内容
             self.actuator_param_table.setRowCount(0)  # 清空表格内容
             QMessageBox.warning(self, "路径或文件缺失", "配置参数表/样品图片 路径不正确或缺失！")
         else:
             # 载入样品图片
-            pixmap = QPixmap(capusle_figure_path)
+            pixmap = QPixmap(capsule_figure_path)
             transform = QTransform().rotate(90)  # 旋转 90°
             pixmap = pixmap.transformed(transform, mode=1)
             scaled_pixmap = pixmap.scaled(self.capsule_figure_zone.size(),  # 适应 QLabel 大小

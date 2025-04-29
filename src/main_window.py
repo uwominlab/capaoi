@@ -121,7 +121,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.toggle_params_checkbox)
 
         # Add a table to display the configuration parameters
-        self.capsule_params_group = QGroupBox("Capule Parameters")
+        self.capsule_params_group = QGroupBox("Capsule Parameters")
         self.capsule_params_layout = QFormLayout(self.capsule_params_group)
         self.capsule_param_table = QTableWidget()
         self.capsule_param_table.setColumnCount(3)
