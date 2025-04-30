@@ -1,7 +1,10 @@
+Background color range in Channel B: 0-120
+Background color range in Channel G: 30-190
+Background color range in Channel R: 60-220
 Contour length threshold TL (pixel): 310-330
 Contour area threshold TA (pixel): 30500-35000
-Overall contour similarity threshold TST: 0-0.05
-Head contour similarity threshold TSH: 0-1.5
+Overall contour similarity threshold TSO: 0-0.05
+Head/tail contour similarity threshold TSH: 0-1.5
 Local defect length threshold TDL (pixel): 0-75
 Distance from actuator to field of view end L (mm): 500
 Actuator height H (mm): 300

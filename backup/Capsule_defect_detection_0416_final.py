@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import imutils
 import time
+# import matplotlib
+# matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from PIL import Image
 plt.rcParams['figure.dpi'] = 300   # 图形的DPI
@@ -48,7 +50,7 @@ def img_preprocessing(img_raw):
     # img_gray = cv2.GaussianBlur(img_gray, (5,5), 0)  # 高斯滤波：平滑图像
     # show_img("img_gray", img_gray)
     ## step 3: 二值化  黑色RGB>>[0,0,0]   白色RGB>>[225,255,255]
-    _, img_binary = cv2.threshold(img_gray, 100, 255, cv2.THRESH_BINARY)  # 图像二值化， 阈值=165（阈值影响开闭运算效果）
+    # _, img_binary = cv2.threshold(img_gray, 100, 255, cv2.THRESH_BINARY)  # 图像二值化， 阈值=165（阈值影响开闭运算效果）
     img_binary = cv2.inRange(img_gray, 1, 255)  # 提取浅色胶囊
     # show_img("img_binary", img_binary)
     # step 4: 形态学操作：先腐蚀再膨胀，去小噪点（等效与开运算）
@@ -178,22 +180,22 @@ def detect_local_defects(capsule_raw, capsule_opened, length, width, local_defec
     # (原图掩膜操作>>均值滤波>>滤波图像原图进行差分>>二值化>>查找轮廓(根据轮廓长度进行筛选)
     draw_image = capsule_raw.copy()
     capsule_masked = cv2.bitwise_and(draw_image, draw_image, mask=capsule_opened)  # 对原始图像进行掩码运算
-    show_img("capsule_masked", capsule_masked)
+    # show_img("capsule_masked", capsule_masked)
     # 截取胶囊中部视角（上下帽体结合处）
     window1 = [int(0.5 * draw_image.shape[0] - 0.15 * length), int(0.5 * draw_image.shape[0] + 0.15 * length)]  # 上下截取
     window2 = [int(0.5 * draw_image.shape[1] - 0.45 * width), int(0.5 * draw_image.shape[1] + 0.45 * width)]  # 左右截取
     capsule_masked = draw_image[window1[0]: window1[1], window2[0]: window2[1], :]
-    show_img("capsule_masked", capsule_masked)
+    # show_img("capsule_masked", capsule_masked)
 
     img1 = capsule_masked
     img2 = capsule_masked
     img1 = cv2.medianBlur(img1, 15)  # 均值滤波
     diff = cv2.absdiff(img1, img2)  # 图像差分
-    show_img("diff", diff)  # 差分结果图
+
     gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)  # 二值化
     minThres = 6  # 控制对缺陷的敏感度
     _, thres = cv2.threshold(gray, minThres, 255, cv2.THRESH_BINARY)
-    show_img("thres", thres)  # 差分结果图
+
     contours, _ = cv2.findContours(thres, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     # sorted_contours = sorted(contours, key=lambda c: cv2.arcLength(c, True), reverse=True)
 
@@ -205,9 +207,11 @@ def detect_local_defects(capsule_raw, capsule_opened, length, width, local_defec
         if local_defect_length <= length and max_length <= length:
             max_length = length
             is_defect = True
-            cv2.drawContours(img2, contours[ii], -1, (0, 0, 255), 2)
-    if is_defect:
-        show_img("local_defects of {}-th capsule".format(capsule_id), img2)
+            # cv2.drawContours(img2, contours[ii], -1, (0, 0, 255), 2)
+    # if is_defect:
+        # show_img("diff", diff)  # 差分结果图
+        # show_img("thres", thres)  # 差分结果图
+        # show_img("local_defects of {}-th capsule".format(capsule_id), img2)
     return is_defect, max_length
 
 
@@ -236,47 +240,48 @@ def capsule_defect_detection(capsule_set_raw, capsule_set_opened,  capsule_cente
     all_capsule_centers = []
     L, W, A, S = [], [], [], []  # 存储所有胶囊的长、宽、面积、轮廓相似度
 
-    for ii in range(0, len(capsule_set_raw)):
-        capsule_raw = capsule_set_raw[ii]
+    for ii, (capsule_raw, mask, center, size, area, similarity) in enumerate(
+            zip(capsule_set_raw, capsule_set_opened, capsule_centers,
+                capsule_size, capsule_area, capsule_similarity)):
         info = "{} of {} capsules: \n".format(ii + 1, len(capsule_set_raw))
         is_abnormal = False
 
         # 检测项目1：长度检测 >> 对比 待测胶囊的最小外接矩形长度 与 正常胶囊的最小外接矩形长度
-        length, width = capsule_size[ii][0], capsule_size[ii][1]
-        info = info + ">>>>长度: {:.2f}".format(length)
-        info = info + ">>>>宽度: {:.2f}".format(width)
+        length, width = size
+        info = info + ">>>>宽度{}: {:.2f}".format(str(nor_width_range), width) + '\n'
+        info = info + ">>>>长度{}: {:.2f}".format(str(nor_len_range), length)
         if length < nor_len_range[0] or nor_len_range[1] < length:
             is_abnormal = True
         info += ' >> Abnormal \n' if length < nor_len_range[0] or nor_len_range[1] < length else '\n'
 
         # 检测项目2：瘪壳检测 >> 对比 待测胶囊的轮廓面积 与 健康胶囊的面积
-        area = capsule_area[ii]
-        info = info + ">>>>面积: {:.2f}".format(area)
+        info = info + ">>>>面积{}: {:.2f}".format(str(nor_area_range), area)
         if area < nor_area_range[0] or nor_area_range[1] < area:
             is_abnormal = True
         info += ' >> Abnormal \n' if area < nor_area_range[0] or nor_area_range[1] < area else '\n'
 
         # 检测项目3：轮廓相似度比较 >> 0~1  越小越相似
-        similarity_overall, similarity_head, similarity_tail, = capsule_similarity[ii][0], capsule_similarity[ii][1],capsule_similarity[ii][2],
-        info = info + ">>>>与 mask_binary 的轮廓相似度: {:.4f},  {:.4f},  {:.4f}".format(similarity_overall, similarity_head, similarity_tail)
+        similarity_overall, similarity_head, similarity_tail, = similarity
+        info = info + ">>>>与 mask_binary 的轮廓相似度{}: {:.4f},  {:.4f},  {:.4f}".format(
+            str([similarity_threshold_overall, similarity_threshold_head, similarity_threshold_head]), similarity_overall, similarity_head, similarity_tail)
         is_abnormal_similarity = similarity_threshold_overall <= similarity_overall or similarity_threshold_head < similarity_head or 0.3 < similarity_threshold_head
         if is_abnormal_similarity:
             is_abnormal = True
         info += ' >> Abnormal !\n' if is_abnormal_similarity else '\n'
 
         # 检测项目4：局部缺陷检测
-        capsule_opened = capsule_set_opened[ii]
-        is_defect, max_length = detect_local_defects(capsule_raw, capsule_opened, length, width, local_defect_length, ii+1)
-        info = info + ">>>>局部缺陷检测最大长度: {:.4f}".format(max_length)
+        is_defect, max_length = detect_local_defects(capsule_raw, mask, length, width, local_defect_length, ii+1)
+        info = info + ">>>>局部缺陷检测最大长度{}: {:.4f}".format(str([local_defect_length]), max_length)
         if is_defect:
             is_abnormal = True
         info += ' >> Abnormal !\n' if is_defect else '\n'
 
         # 打印状态信息 info
         print(info)
-    #     all_capsule_centers.append(capsule_centers[ii])
-    #     if is_abnormal:
-    #         abnormal_capsule_centers.append(capsule_centers[ii])
+        all_capsule_centers.append(capsule_centers[ii])
+        if is_abnormal:
+            abnormal_capsule_centers.append(capsule_centers[ii])
+
     #     L.append(length)
     #     W.append(width)
     #     A.append(area)
@@ -341,7 +346,8 @@ if __name__ == "__main__":
     # img_path = 'Color selection0410/1.bmp'  # 黑色背景
     # bgc_ranges = {"bgc": ([0, 0, 0], [80, 80, 80])}  # 黑色
 
-    img_path = 'Color selection0410/2.bmp'  # 天蓝色背景
+    # img_path = 'Color selection0410/2.bmp'  # 天蓝色背景
+    img_path = 'E:/Source/capaoi/Fig0429_raw.bmp'  # 天蓝色背景
     bgc_ranges = {"bgc": ([0, 30, 60], [120, 190, 220])}  # 天蓝色  [90， 160， 160]
 
     # img_path = 'Color selection0410/5.bmp'  # 天蓝色背景
@@ -382,16 +388,16 @@ if __name__ == "__main__":
                                                                              local_defect_length=local_defect_length)
     print('消耗的时间为：',(time.time() - start_time))
 
-    # draw_img = img_raw.copy()
-    # draw_img = cv2.drawContours(draw_img, boxs, -1, (0, 255, 0), 2)
-    #
-    # for center in capsule_centers_abnormal:
-    #     cv2.circle(draw_img, (int(center[0]), int(center[1])), 5, (0, 0, 255), 10)
-    #
-    # for ii in range(len(all_capsule_centers)):
-    #     center = all_capsule_centers[ii]
-    #     cv2.putText(draw_img, str(ii+1), (int(center[0]), int(center[1])), cv2.FONT_HERSHEY_SIMPLEX, 2, (2550, 0, 0), 2)
-    # show_img("Defection_results", draw_img)
+    draw_img = img_raw.copy()
+    draw_img = cv2.drawContours(draw_img, boxs, -1, (0, 255, 0), 2)
+
+    for center in capsule_centers_abnormal:
+        cv2.circle(draw_img, (int(center[0]), int(center[1])), 10, (0, 0, 255), 10)
+
+    for ii in range(len(all_capsule_centers)):
+        center = all_capsule_centers[ii]
+        cv2.putText(draw_img, str(ii+1), (int(center[0]), int(center[1])), cv2.FONT_HERSHEY_SIMPLEX, 2, (2550, 0, 0), 2)
+    show_img("Defection_results", draw_img)
 
 
 

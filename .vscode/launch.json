@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug Capsule_defect_detection_0120.py",
+            "name": "Debug Capsule_defect_detection_0416_final.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/backup/Capsule_defect_detection_0120.py",
+            "program": "${workspaceFolder}/backup/Capsule_defect_detection_0416_final.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/backup",
         },

@@ -1,9 +1,12 @@
-Contour Length Threshold TL (pixel): 310-330
-Contour Area Threshold TA (pixel): 31,500-33,000
-Overall Contour Similarity Threshold TST: 0-0.05
-Head Contour Similarity Threshold TSH: 0-1.5
-Local Defect Length Threshold TDL (pixel): 0-75
-Distance from Actuator to Field of View End L (mm): 500
-Actuator Height H (mm): 300
-Shortest Actuator Reset Interval T (s): 0.2
-Actuator Response Delay D (s): 0.2
+Background color range in Channel B: 0-120
+Background color range in Channel G: 30-190
+Background color range in Channel R: 60-220
+Contour length threshold TL (pixel): 310-330
+Contour area threshold TA (pixel): 30500-35000
+Overall contour similarity threshold TST: 0-0.05
+Head contour similarity threshold TSH: 0-1.5
+Local defect length threshold TDL (pixel): 0-75
+Distance from actuator to field of view end L (mm): 500
+Actuator height H (mm): 300
+Actuator maximum reset time interval T (s): 0.2
+Actuator response delay D (s): 0.2
