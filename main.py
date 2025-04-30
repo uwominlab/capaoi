@@ -11,31 +11,15 @@ Using type hints to reduces compilation time and save run time resources.
 import logging
 import os
 import sys
-import time
 
 import cv2
-import numpy as np
-from pypylon import pylon
 
 # pylint: disable=no-name-in-module
 from PyQt6.QtCore import QSettings
 from PyQt6.QtWidgets import QApplication
 
-from src.contours import find_contours_img
-from src.defects import detect_capsule_defects
-
-from src.params import BELT_LENGTH_MM, BELT_SPEED_MM_S
-from src.params import GRABBING_TIMEOUT_MS, INIT_EXPOSURE_TIME, INIT_FRAME_RATE, INIT_GAIN
-from src.params import INIT_HEIGHT, INIT_WIDTH, MM_PER_PIXEL
-# from src.params import ACTUATOR_RETRACTION_TIME
 from src.params import ROOT_DIR
-
 from src.main_window import MainWindow
-# from src.relay_controller import RelayController
-
-from utils.transform import get_img_opened
-from utils.visualize import cvimshow
-
 
 # Change this to False for release mode
 DEBUG_MODE: bool = True
@@ -51,11 +35,7 @@ logging.basicConfig(
 MASK_IMG_PATH: str = os.path.join(
     ROOT_DIR, "data", "Figs_14", "Capsule_1_mask_binary.png")
 # pylint: disable=no-member
-# MASK_RAW: cv2.typing.MatLike = cv2.imread(MASK_IMG_PATH)
 MASK_BIN: cv2.typing.MatLike = cv2.imread(MASK_IMG_PATH, cv2.IMREAD_GRAYSCALE)
-
-if USE_EMULATION:
-    os.environ['PYLON_CAMEMU'] = '1'
 
 
 def main() -> None:
