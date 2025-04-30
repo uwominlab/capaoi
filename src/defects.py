@@ -81,8 +81,10 @@ def detect_capsule_defects(
     capsule_areas: list[float],
     capsule_similarities: list[list[float]],
     normal_length_range: tuple[int, int] = (310, 330),
+    normal_width_range: tuple[int, int] = (100, 150),
     normal_area_range: tuple[int, int] = (30500, 35000),
-    similarity_threshold: float = 0.05,
+    similarity_threshold_overall: float = 0.1,
+    similarity_threshold_head: float = 0.3,
     local_defect_length: int = 75
 ) -> list[tuple[int, int]]:
     """
@@ -96,7 +98,8 @@ def detect_capsule_defects(
     :param capsule_similarities: List of contour similarity scores for each capsule.
     :param normal_length_range: Tuple indicating the normal range of capsule lengths.
     :param normal_area_range: Tuple indicating the normal range of capsule areas.
-    :param similarity_threshold: Threshold for contour similarity.
+    :param similarity_threshold_overall: Threshold for contour similarity.
+    :param similarity_threshold_head: 头部相似度阈值（低于阈值为正常）
     :param local_defect_length: Length threshold for detecting local defects.
     :return: List of centers of capsules flagged as abnormal.
     """
@@ -136,8 +139,8 @@ def detect_capsule_defects(
             similarities[0], similarities[1], similarities[2]
 
         is_abnormal_similarity: bool =\
-            similarity_threshold <= similarity_overall \
-            or 1.5 < similarity_head or 1.5 < similarity_tail
+            similarity_threshold_overall <= similarity_overall \
+            or similarity_threshold_head < similarity_head or similarity_threshold_head < similarity_tail
         if is_abnormal_similarity and center not in abnormal_capsule_centers:
             abnormal_capsule_centers.append(center)
             if not DEFECTS_DETECTION_DEBUG:
@@ -161,7 +164,7 @@ def detect_capsule_defects(
                 # pylint: disable=line-too-long
                 f"Contour Similarity: {similarity_overall:.4f}, {similarity_head:.4f}, {similarity_tail:.4f} (Lower is better)\n"
                 # pylint: disable=line-too-long
-                f"Similarities: {similarity_threshold <= similarity_overall}, {1.5 < similarity_head}, {1.5 < similarity_tail}\n"
+                f"Similarities: {similarity_threshold_overall <= similarity_overall}, {similarity_threshold_head < similarity_head}, {similarity_threshold_head < similarity_tail}\n"
                 f"Local Defect Length: {local_defect_length})\n"
                 f"{'>>> Defect Detected <<<\n' if is_defect else '\n'}"
             )

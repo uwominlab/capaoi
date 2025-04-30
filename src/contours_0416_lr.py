@@ -61,9 +61,12 @@ def find_contours_img(
     cv2.imshow(winname="Detected Capsules", mat=draw_img)
 
     # Step 4: Import the mask of the standard capsule
-    mask_overall = cv2.findContours(mask_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    mask_head = cv2.findContours(mask_binary[:int(0.20 * mask_binary.shape[0]), :], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    mask_tail = cv2.findContours(mask_binary[int(0.80 * mask_binary.shape[0]):, :], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    mask_overall = cv2.findContours(
+        mask_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    mask_head = cv2.findContours(mask_binary[:int(
+        0.20 * mask_binary.shape[0]), :], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    mask_tail = cv2.findContours(mask_binary[int(
+        0.80 * mask_binary.shape[0]):, :], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     mask_overall, mask_head, mask_tail = (imutils.grab_contours(mask_overall),
                                           imutils.grab_contours(mask_head), imutils.grab_contours(mask_tail))
     if mask_overall and mask_head and mask_tail:
@@ -87,22 +90,27 @@ def find_contours_img(
         # Ensure horizontal alignment
         if target_raw.shape[0] > target_raw.shape[1]:
             target_raw = cv2.rotate(target_raw, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            target_opened = cv2.rotate(target_opened, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            target_opened = cv2.rotate(
+                target_opened, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
         capsule_set_raw.append(target_raw)
         capsule_set_opened.append(target_opened)
 
         # Analyze contours in the cropped denoised image
         length, width = max(rect[1]), min(rect[1])
-        main_contour, similarity_overall = calculate_contours_similarity(target_opened, mask_overall)
+        main_contour, similarity_overall = calculate_contours_similarity(
+            target_opened, mask_overall)
         if main_contour:
-            _, similarity_head = calculate_contours_similarity(target_opened[:int(0.20 * target_opened.shape[0]), :], mask_head)
-            _, similarity_tail = calculate_contours_similarity(target_opened[int(0.80 * target_opened.shape[0]):, :], mask_tail)
+            _, similarity_head = calculate_contours_similarity(
+                target_opened[:int(0.20 * target_opened.shape[0]), :], mask_head)
+            _, similarity_tail = calculate_contours_similarity(
+                target_opened[int(0.80 * target_opened.shape[0]):, :], mask_tail)
             area = cv2.contourArea(main_contour)
 
             capsule_size.append(np.array([length, width]))
             capsule_area.append(area)
-            capsule_similarity.append([similarity_overall, similarity_head, similarity_tail])
+            capsule_similarity.append(
+                [similarity_overall, similarity_head, similarity_tail])
         else:
             raise ValueError("No main_contour exist.")
 
@@ -119,9 +127,11 @@ def calculate_contours_similarity(target_opened, contour_mask):
         - similarity: Similarity between target_opened and contour_mask.
     """
     # Extract capsule contour
-    contours = cv2.findContours(target_opened, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours = cv2.findContours(
+        target_opened, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     contours = imutils.grab_contours(contours)  # 适配不同的 opencv 版本
     # Take the largest contour as the main contour
     main_contour = max(contours, key=cv2.contourArea)  # 提取主轮廓
-    similarity = cv2.matchShapes(contour_mask, main_contour, cv2.CONTOURS_MATCH_I1, 0.0)
+    similarity = cv2.matchShapes(
+        contour_mask, main_contour, cv2.CONTOURS_MATCH_I1, 0.0)
     return main_contour, similarity

@@ -50,19 +50,22 @@ def find_contours_img(
     True
     """
     # Step 1: Detect contours in the denoised image
-    contours = cv2.findContours(
-        img_opened, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours = cv2.findContours(img_opened, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     contours = grab_contours(contours)
 
     # Step 2: Filter valid contours based on size threshold
-    contours = [c for c in contours if 500 < len(c) < 1000]
+    # Sort the contours of the capsules in the list （x, y, w, h
+    # Retreive the rectangular bounding box, x coordinates decreasing order (from right to left)
+    # and y coordinates increasing order (from bottom to top)
+    contours = [c for c in contours if 400 < len(c) < 1500]
+    contours = sorted(contours, key=lambda c: (-cv2.boundingRect(c)[0], cv2.boundingRect(c)[1]))
 
     # Step 3: Extracting the minimum bounding rectangle and its parameters for each contour
     rects, boxs, capsule_centers = [], [], []
     for contour in contours:
         rect = cv2.minAreaRect(contour)
-        rects.append(rect)
         capsule_centers.append(rect[0])
+        rects.append(rect)
         box = np.int64(cv2.boxPoints(rect))
         boxs.append(box)
 
@@ -71,22 +74,19 @@ def find_contours_img(
         draw_img = img_raw.copy()
         draw_img = cv2.drawContours(draw_img, boxs, -1, (0, 0, 255), 2)
         for index, center in enumerate(capsule_centers):
-            cv2.circle(draw_img, (int(center[0]), int(
-                center[1])), 10, (0, 255, 0), -1)
+            cv2.circle(draw_img, (int(center[0]), int(center[1])),
+                       10, (0, 255, 0), -1)
             cv2.putText(draw_img, str(index + 1),
                 (int(center[0]), int(center[1])),
                 cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 2)
         cv2.imwrite("Detected_Capsules.png", draw_img)
 
     # Step 4: Import the mask of the standard capsule
-    mask_overall = cv2.findContours(
-        mask_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    mask_head = cv2.findContours(mask_binary[:int(
-        0.20 * mask_binary.shape[0]), :], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    mask_tail = cv2.findContours(mask_binary[int(
-        0.80 * mask_binary.shape[0]):, :], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    mask_overall, mask_head, mask_tail = (
-        grab_contours(mask_overall), grab_contours(mask_head), grab_contours(mask_tail))
+    mask_overall = cv2.findContours(mask_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    mask_head = cv2.findContours(mask_binary[:int(0.20 * mask_binary.shape[0]), :], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    mask_tail = cv2.findContours(mask_binary[int(0.80 * mask_binary.shape[0]):, :], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    mask_overall, mask_head, mask_tail = (grab_contours(mask_overall),
+                                          grab_contours(mask_head), grab_contours(mask_tail))
     if mask_overall and mask_head and mask_tail:
         mask_overall, mask_head, mask_tail = mask_overall[0], mask_head[0], mask_tail[0]
     else:
@@ -110,8 +110,7 @@ def find_contours_img(
         # Ensure horizontal alignment
         if target_raw.shape[0] > target_raw.shape[1]:
             target_raw = cv2.rotate(target_raw, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            target_opened = cv2.rotate(
-                target_opened, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            target_opened = cv2.rotate(target_opened, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
         capsule_set_raw.append(target_raw)
         capsule_set_opened.append(target_opened)
@@ -129,8 +128,7 @@ def find_contours_img(
 
             capsule_size.append(np.array([length, width]))
             capsule_area.append(area)
-            capsule_similarity.append(
-                [similarity_overall, similarity_head, similarity_tail])
+            capsule_similarity.append([similarity_overall, similarity_head, similarity_tail])
         else:
             raise ValueError("No main_contour exist.")
 
@@ -151,8 +149,7 @@ def calculate_contours_similarity(
         - similarity: Similarity between target_opened and contour_mask.
     """
     # Extract capsule contour
-    contours = cv2.findContours(
-        target_opened, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours = cv2.findContours(target_opened, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     contours = grab_contours(contours)
     # Take the largest contour as the main contour
     if contours:
