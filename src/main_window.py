@@ -753,7 +753,7 @@ class MainWindow(QMainWindow):
         min_value: str = min_value_item.text()
         max_value: str = max_value_item.text()
 
-        if not '0' <= min_value <= max_value:
+        if not 0.0 <= float(min_value) <= float(max_value):
             QMessageBox.warning(
                 self, "Invalid Input", f"Invalid boundary condition for {param_name}. \
                 Lower bound should be less than or equal to upper bound."
