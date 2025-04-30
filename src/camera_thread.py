@@ -184,18 +184,25 @@ class CameraThread(QThread):
 
                 # Detect the defective capsules
                 capsule_centers_abnormal = detect_capsule_defects(
-                    capsule_set_raw, capsule_set_opened, capsule_centers,
-                    capsule_size, capsule_area, capsule_similarity,
-                    (
+                    capsule_images_raw=capsule_set_raw,
+                    capsule_masks=capsule_set_opened,
+                    capsule_centers=capsule_centers,
+                    capsule_sizes=capsule_size,
+                    capsule_areas=capsule_area,
+                    capsule_similarities=capsule_similarity,
+                    normal_length_range=(
                         self.detection_params.normal_length_lower,
                         self.detection_params.normal_length_upper
                     ),
-                    (
+                    normal_width_range=(100, 150),
+                    normal_area_range=(
                         self.detection_params.normal_area_lower,
                         self.detection_params.normal_area_upper
                     ),
-                    self.detection_params.similarity_threshold,
-                    self.detection_params.local_defect_length)
+                    similarity_threshold_overall=self.detection_params.similarity_threshold_overall,
+                    similarity_threshold_head=0.3,
+                    local_defect_length=self.detection_params.local_defect_length
+                )
 
                 # Get current timestamp in seconds
                 grab_time = time.time()

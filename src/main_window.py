@@ -771,9 +771,13 @@ class MainWindow(QMainWindow):
                 "lower": "normal_area_lower",
                 "upper": "normal_area_upper"
             },
-            "Overall contour similarity threshold TST": {
+            "Overall contour similarity threshold TSO": {
                 "type": float,
-                "upper": "similarity_threshold"
+                "upper": "similarity_threshold_overall"
+            },
+            "Head/tail contour similarity threshold TSH": {
+                "type": float,
+                "upper": "similarity_threshold_head"
             },
             "Local defect length threshold TDL (pixel)": {
                 "type": int,

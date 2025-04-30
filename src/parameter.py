@@ -18,7 +18,8 @@ class DefectDetectionParams:
         normal_length_upper (int): Upper bound for the normal defect length.
         normal_area_lower (int): Lower bound for the normal defect area.
         normal_area_upper (int): Upper bound for the normal defect area.
-        similarity_threshold (float): Threshold for similarity comparison, must be non-negative.
+        similarity_threshold_overall (float): Threshold for similarity comparison, must be non-negative.
+        similarity_threshold_head (float): Threshold for similarity comparason for capsule tips.
         local_defect_length (int): Length threshold for detecting local defects.
 
     Methods:
@@ -31,7 +32,8 @@ class DefectDetectionParams:
         ...     normal_length_upper=330,
         ...     normal_area_lower=30500,
         ...     normal_area_upper=35000,
-        ...     similarity_threshold=0.05,
+        ...     similarity_threshold_overall=0.05,
+        ...     similarity_threshold_head=0.1,
         ...     local_defect_length=75
         ... )
         >>> params.normal_length_lower
@@ -42,8 +44,10 @@ class DefectDetectionParams:
         30500
         >>> params.normal_area_upper
         35000
-        >>> params.similarity_threshold
+        >>> params.similarity_threshold_overall
         0.05
+        >>> params.similarity_threshold_head
+        0.1
         >>> params.local_defect_length
         75
 
@@ -71,7 +75,8 @@ class DefectDetectionParams:
     normal_area_lower: int = 30500
     normal_area_upper: int = 35000
 
-    similarity_threshold: float = 0.05
+    similarity_threshold_overall: float = 0.05
+    similarity_threshold_head: float = 0.1
     local_defect_length: int = 75
 
     def __post_init__(self):
@@ -84,7 +89,9 @@ class DefectDetectionParams:
         assert requires_positive_lower_upper(
             self.normal_area_lower, self.normal_area_upper)
 
-        assert self.similarity_threshold >= 0
+        assert self.similarity_threshold_overall >= 0
+
+        assert self.similarity_threshold_head >= 0
 
 
 if __name__ == "__main__":

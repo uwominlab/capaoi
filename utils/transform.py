@@ -13,11 +13,11 @@ import numpy as np
 def generate_background_mask(image_rgb: np.ndarray, bgc_ranges: dict) -> np.ndarray:
     """
     Generates a combined background mask for the specified RGB ranges.
-    
+
     Parameters:
         image_rgb (np.ndarray): RGB image.
         bgc_ranges (dict): Dictionary of color names to (lower, upper) RGB range tuples.
-    
+
     Returns:
         np.ndarray: Combined binary mask for all specified background ranges.
     """
@@ -80,8 +80,8 @@ def cut_image_by_box(img: cv2.typing.MatLike, points: np.ndarray) -> cv2.typing.
         [0, 0],
         [width - 1, 0],
         [width - 1, height - 1],
-        [0, height - 1]
-    ], dtype=np.float32)
+        [0, height - 1]],
+        dtype=np.float32)
 
     # Compute the perspective transformation matrix
     transformation_matrix = cv2.getPerspectiveTransform(points, output_points)
@@ -106,41 +106,14 @@ def get_img_opened(img_raw: cv2.typing.MatLike) -> cv2.typing.MatLike:
     Returns:
         cv2.typing.MatLike: The processed image after applying the morphological operations.
     """
+    # Step 1: Grayscale image
     img_gray: cv2.typing.MatLike = cv2.cvtColor(img_raw, cv2.COLOR_BGR2GRAY)
-
+    # Step2: Median filtering: removing salt and pepper noise while preserving edges
     img_gray = cv2.medianBlur(img_gray, 15)
+    # Step 3: Binary image to highlight capsules
     img_binary = cv2.inRange(img_gray, 1, 255)
-
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (11, 11))
-
+    # Step 4: Morphological open operation: first corrode and dilate expand, remove small noise points
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
     img_opened: cv2.typing.MatLike = cv2.morphologyEx(
-        img_binary, cv2.MORPH_OPEN, kernel)
-
+        img_binary, cv2.MORPH_OPEN, kernel, iterations=1)
     return img_opened
-
-
-def preprocess_image(image: cv2.typing.MatLike) -> cv2.typing.MatLike:
-    """
-    Function to preprocess an image by the following steps:
-    1 - convert the image to grayscale
-    2 - apply Gaussian Blur
-    3 - enhance Contrast using CLAHE
-
-    Args:
-        image (np.ndarray): matrix-like 2 dimensional array of pixels
-
-    Returns:
-        mat: matrix-like 2 dim array of pixels
-    """
-    # Convert to Grayscale
-    grayscale_image = cv2.cvtColor(src=image, code=cv2.COLOR_BGR2GRAY)
-
-    # Apply Gaussian Blur (or Median Filter)
-    blurred_image = cv2.GaussianBlur(grayscale_image, (5, 5), 0)
-    # filtered_image = cv2.medianBlur(grayscale_image, 5)  # median filtering
-
-    # Enhance Contrast using CLAHE
-    clahe: cv2.CLAHE = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    enhanced_image: cv2.typing.MatLike = clahe.apply(src=blurred_image)
-
-    return enhanced_image
