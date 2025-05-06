@@ -28,7 +28,7 @@ from src.params import INIT_WIDTH, INIT_HEIGHT, INIT_FRAME_RATE
 from src.params import INIT_GAIN, INIT_EXPOSURE_TIME, GRABBING_TIMEOUT_MS
 from src.params import MM_PER_PIXEL, BELT_LENGTH_MM, BELT_SPEED_MM_S
 
-from utils.transform import remove_background, get_img_opened
+from utils.transform import remove_background, get_img_opened, remove_zero_rows
 from utils.visualize import cvimshow
 
 # Change this to False for release mode
@@ -48,6 +48,7 @@ MASK_IMG_PATH: str = os.path.join(
 # pylint: disable=no-member
 # MASK_RAW: cv2.typing.MatLike = cv2.imread(MASK_IMG_PATH, cv2.IMREAD_UNCHANGED)
 MASK_BIN: cv2.typing.MatLike = cv2.imread(MASK_IMG_PATH, cv2.IMREAD_GRAYSCALE)
+MASK_BIN = remove_zero_rows(MASK_BIN)
 
 
 class CameraThread(QThread):
@@ -146,7 +147,7 @@ class CameraThread(QThread):
         capsule_centers_abnormal: list[tuple[int, int]]
         abs_actuation_timestamps: list[float] = []
 
-        self.camera.StopGrabbing()
+        # self.camera.StopGrabbing()
         # Only grab the latest image
         # Blocks till the image is processed
         self.camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
@@ -167,20 +168,40 @@ class CameraThread(QThread):
             if grab_result.GrabSucceeded():
                 pylon_image = converter.Convert(grab_result)
                 image = pylon_image.GetArray()
+                cv2.imwrite("Fig0506_raw.bmp", image)
+                # image = cv2.imread("Fig0505_raw.bmp", image)
 
                 # Remove background colour
                 bgc_ranges: dict[str, tuple[list[int], list[int]]] = {
-                    "bgc": ([0, 30, 60], [120, 190, 220])
+                    "bgc": (
+                        [
+                            self.detection_params.B_val_lower,
+                            self.detection_params.G_val_lower,
+                            self.detection_params.R_val_lower
+                        ],
+                        [
+                            self.detection_params.B_val_upper,
+                            self.detection_params.G_val_upper,
+                            self.detection_params.R_val_upper
+                        ]
+                    )
                 }
                 image = remove_background(image, bgc_ranges)
 
                 # Obtain the morphologically processed copy of the image
                 image_opened: cv2.typing.MatLike = get_img_opened(image)
+                cv2.imwrite("Fig0505_opened.png", image_opened)
 
                 # Find the contours in the image
                 capsule_set_raw, capsule_set_opened, \
                     capsule_centers, capsule_size, capsule_area, capsule_similarity \
-                    = find_contours_img(image, image_opened, MASK_BIN)
+                    = find_contours_img(
+                        image, image_opened, MASK_BIN,
+                        normal_length_range=(
+                            self.detection_params.normal_length_lower,
+                            self.detection_params.normal_length_upper
+                        )
+                    )
 
                 # Detect the defective capsules
                 capsule_centers_abnormal = detect_capsule_defects(
@@ -200,12 +221,12 @@ class CameraThread(QThread):
                         self.detection_params.normal_area_upper
                     ),
                     similarity_threshold_overall=self.detection_params.similarity_threshold_overall,
-                    similarity_threshold_head=0.3,
+                    similarity_threshold_head=self.detection_params.similarity_threshold_head,
                     local_defect_length=self.detection_params.local_defect_length
                 )
 
                 # Get current timestamp in seconds
-                grab_time = time.time()
+                grab_time: float = time.time()
 
                 # Calculate absolute actuation timestamps
                 abs_actuation_timestamps = [
@@ -221,13 +242,16 @@ class CameraThread(QThread):
                 ]
                 for index, point in enumerate(points):
                     cv2.putText(
-                        img=image, text=str(index), org=(point[0], point[1]),
+                        img=image, text=str(index+1), org=(point[0], point[1]),
                         fontFace=cv2.FONT_HERSHEY_SIMPLEX,
                         # Draw a green filled circle
-                        fontScale=2, color=(255, 0, 0), thickness=2)
+                        fontScale=2, color=(255, 0, 0), thickness=2
+                    )
 
-                points = [(int(x), int(y))
-                          for x, y in capsule_centers_abnormal]
+                points = [
+                    (int(x), int(y))
+                    for x, y in capsule_centers_abnormal
+                ]
                 for index, point in enumerate(points):
                     cv2.circle(
                         img=image, center=point, radius=5,

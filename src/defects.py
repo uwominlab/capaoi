@@ -28,8 +28,10 @@ logging.basicConfig(
 
 
 def detect_defects(
-    raw_image: MatLike, mask: MatLike, local_defect_length: int
-) -> bool:
+    raw_image: MatLike,
+    mask: MatLike,
+    local_defect_length: int
+) -> tuple[bool, float]:
     """
     Detect defects in the given capsule image based on the mask.
 
@@ -61,13 +63,15 @@ def detect_defects(
     # Extract and filter contours
     contours, _ = findContours(binary_diff, RETR_EXTERNAL, CHAIN_APPROX_NONE)
 
-    is_defect: bool = False
+    partial_defect: bool = False
+    max_length: float = 0.0
     for contour in contours:
         length: float = arcLength(contour, closed=True)
-        if local_defect_length < length:
-            is_defect = True
+        if local_defect_length <= length and max_length <= length:
+            max_length = length
+            partial_defect = True
 
-    return is_defect
+    return partial_defect, max_length
 
 
 # pylint: disable=too-many-arguments
@@ -80,7 +84,7 @@ def detect_capsule_defects(
     capsule_sizes: list[tuple[int, int]],
     capsule_areas: list[float],
     capsule_similarities: list[list[float]],
-    normal_length_range: tuple[int, int] = (310, 330),
+    normal_length_range: tuple[int, int],
     normal_width_range: tuple[int, int] = (100, 150),
     normal_area_range: tuple[int, int] = (30500, 35000),
     similarity_threshold_overall: float = 0.1,
@@ -147,27 +151,23 @@ def detect_capsule_defects(
                 continue
 
         # Step 4 >> Defect detection
-        is_defect: bool = detect_defects(
-            raw_image, mask, local_defect_length)
-        if is_defect and center not in abnormal_capsule_centers:
+        partial_defect, max_length = detect_defects(raw_image, mask, local_defect_length)
+        if partial_defect and center not in abnormal_capsule_centers:
             abnormal_capsule_centers.append(center)
             if not DEFECTS_DETECTION_DEBUG:
                 continue
 
         if DEFECTS_DETECTION_DEBUG:
-            info: str = (
-                f"{index + 1} of {len(capsule_images_raw)} capsules:\n"
-                f"Length: {length:.2f} (Normal Range: {normal_length_range}), Width: {width:.2f}\n"
-                f"Length Normal: {normal_length_range[0] <= length <= normal_length_range[1]}\n"
-                f"Area: {area:.2f} (Normal Range: {normal_area_range})\n"
-                f"Area Normal: {normal_area_range[0] <= area <= normal_area_range[1]}\n"
-                # pylint: disable=line-too-long
-                f"Contour Similarity: {similarity_overall:.4f}, {similarity_head:.4f}, {similarity_tail:.4f} (Lower is better)\n"
-                # pylint: disable=line-too-long
-                f"Similarities: {similarity_threshold_overall <= similarity_overall}, {similarity_threshold_head < similarity_head}, {similarity_threshold_head < similarity_tail}\n"
-                f"Local Defect Length: {local_defect_length})\n"
-                f"{'>>> Defect Detected <<<\n' if is_defect else '\n'}"
-            )
+            info: str = \
+                f"{index + 1} of {len(capsule_images_raw)} capsules:\n" + \
+                f"Length: {length:.2f} (Normal Range: {normal_length_range}), Width: {width:.2f}\n" \
+                f"Length Normal: {normal_length_range[0] <= length <= normal_length_range[1]}\n" \
+                f"Area: {area:.2f} (Normal Range: {normal_area_range})\n" \
+                f"Area Normal: {normal_area_range[0] <= area <= normal_area_range[1]}\n" \
+                f"Contour Similarity: {similarity_overall:.4f}, {similarity_head:.4f}, {similarity_tail:.4f} (Lower is better)\n" \
+                f"Similarities: {similarity_threshold_overall <= similarity_overall}, {similarity_threshold_head < similarity_head}, {similarity_threshold_head < similarity_tail}\n" \
+                f"Local Defect Length: {max_length}\n" \
+                f"Partial Defect Detected: {partial_defect}\n"
             logging.debug(info)
 
     return abnormal_capsule_centers
