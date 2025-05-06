@@ -79,6 +79,13 @@ class DefectDetectionParams:
     similarity_threshold_head: float = 0.1
     local_defect_length: int = 75
 
+    B_val_lower: int = 0
+    B_val_upper: int = 120
+    G_val_lower: int = 30
+    G_val_upper: int = 190
+    R_val_lower: int = 60
+    R_val_upper: int = 220
+
     def __post_init__(self):
         def requires_positive_lower_upper(lower: int, upper: int) -> bool:
             return 0 < lower < upper
