@@ -27,7 +27,7 @@ from src.relay_controller import RelayController
 
 from src.params import ROOT_DIR
 from src.params import INIT_WIDTH, INIT_HEIGHT
-from src.params import ACTUATOR_RETRACTION_TIME, RELAY_1
+from src.params import ACTUATOR_RETRACTION_TIME, RELAY_2
 
 IMAGE_RATIO: float = 0.55
 
@@ -304,7 +304,7 @@ class MainWindow(QMainWindow):
         ...         self.actuation_timestamps = []
         ...         self.last_actuation_time = None
         >>> ACTUATOR_RETRACTION_TIME = 0.1
-        >>> RELAY_1 = 1
+        >>> RELAY_2 = 1
         >>> instance = MockMainWindow()
         >>> def process_actuation_timestamps_wrapper(ts: list[float]) -> None:
         ...    MainWindow.process_actuation_timestamps(instance, ts)
@@ -362,9 +362,9 @@ class MainWindow(QMainWindow):
         #         latest_timestamp, earliest_timestamp + ACTUATOR_RETRACTION_TIME)
         #     target_timestamp: float = current_timestamp + ACTUATOR_RETRACTION_TIME
         #     if earliest_timestamp <= target_timestamp:
-        #         self.relay.turn_on(relay_number=RELAY_1)
+        #         self.relay.turn_on(relay_number=RELAY_2)
         # else:
-        #     self.relay.turn_off(relay_number=RELAY_1)
+        #     self.relay.turn_off(relay_number=RELAY_2)
 
         # Actuate relay based on timestamp comparison
         if self.actuation_timestamps:
@@ -376,20 +376,20 @@ class MainWindow(QMainWindow):
             if earliest_timestamp <= target_timestamp:
                 if self.last_actuation_time is None or \
                         (current_timestamp - self.last_actuation_time) >= ACTUATOR_RETRACTION_TIME:
-                    self.relay.turn_on(relay_number=RELAY_1)
+                    self.relay.turn_on(relay_number=RELAY_2)
                     self.last_actuation_time = current_timestamp
             else:
                 # Not yet the time to actuate
                 # Turn off only if the last actuation period has ended
                 if self.last_actuation_time and \
                         (current_timestamp - self.last_actuation_time) >= ACTUATOR_RETRACTION_TIME:
-                    self.relay.turn_off(relay_number=RELAY_1)
+                    self.relay.turn_off(relay_number=RELAY_2)
                     self.last_actuation_time = None
         else:
             # No more valid timestamps, turn off relay if needed
             if self.last_actuation_time and \
                     (current_timestamp - self.last_actuation_time) >= ACTUATOR_RETRACTION_TIME:
-                self.relay.turn_off(relay_number=RELAY_1)
+                self.relay.turn_off(relay_number=RELAY_2)
                 self.last_actuation_time = None
 
     # pylint: disable=invalid-name
@@ -413,7 +413,7 @@ class MainWindow(QMainWindow):
         self.camera_thread.requestInterruption()
         self.camera_thread.wait()
         # Make sure the relay is turned off and the device resources are released
-        self.relay.turn_off(relay_number=RELAY_1)
+        self.relay.turn_off(relay_number=RELAY_2)
         self.relay.release()
         if a0:
             a0.accept()
@@ -598,7 +598,7 @@ class MainWindow(QMainWindow):
         Pause the detection process.
         """
         self.toggle_editable(True)
-        self.relay.turn_off(relay_number=RELAY_1)
+        self.relay.turn_off(relay_number=RELAY_2)
         self.camera_thread.requestInterruption()
         self.camera_thread.wait()
         self.update_status_led("red")
@@ -608,6 +608,7 @@ class MainWindow(QMainWindow):
         Stop the detection process.
         """
         self.toggle_editable(True)
+        self.relay.turn_off(relay_number=RELAY_2)
         self.camera_thread.requestInterruption()
         self.camera_thread.wait()
         self.update_status_led("red")
@@ -628,6 +629,7 @@ class MainWindow(QMainWindow):
         self.config_combo.setEnabled(editable)
         self.update_config_btn.setEnabled(editable)
         self.capsule_param_table.setEnabled(editable)
+        self.actuator_param_table.setEnabled(editable)
         self.start_btn.setEnabled(editable)
         self.pause_btn.setEnabled(not editable)
         if not editable:
@@ -761,6 +763,21 @@ class MainWindow(QMainWindow):
             return
 
         param_boundary_mapping: dict[str, dict[str, type | str]] = {
+            "Background color range in Channel B": {
+                "type": int,
+                "lower": "B_val_lower",
+                "upper": "B_val_upper"
+            },
+            "Background color range in Channel G": {
+                "type": int,
+                "lower": "G_val_lower",
+                "upper": "G_val_upper"
+            },
+            "Background color range in Channel R": {
+                "type": int,
+                "lower": "R_val_lower",
+                "upper": "R_val_upper"
+            },
             "Contour length threshold TL (pixel)": {
                 "type": int,
                 "lower": "normal_length_lower",
