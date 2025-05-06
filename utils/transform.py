@@ -70,10 +70,8 @@ def cut_image_by_box(img: cv2.typing.MatLike, points: np.ndarray) -> cv2.typing.
             "Points must be a 4x2 array representing four corners of a quadrilateral.")
 
     # Calculate the width and height of the transformed rectangle
-    width = int(max(np.linalg.norm(
-        points[0] - points[1]), np.linalg.norm(points[2] - points[3])))
-    height = int(max(np.linalg.norm(
-        points[1] - points[2]), np.linalg.norm(points[3] - points[0])))
+    width = int(max(np.linalg.norm(points[0] - points[1]), np.linalg.norm(points[2] - points[3])))  # type: ignore
+    height = int(max(np.linalg.norm(points[1] - points[2]), np.linalg.norm(points[3] - points[0])))  # type: ignore
 
     # Define the coordinates of the output rectangle's corners
     output_points = np.array([
@@ -111,9 +109,35 @@ def get_img_opened(img_raw: cv2.typing.MatLike) -> cv2.typing.MatLike:
     # Step2: Median filtering: removing salt and pepper noise while preserving edges
     img_gray = cv2.medianBlur(img_gray, 15)
     # Step 3: Binary image to highlight capsules
-    img_binary = cv2.inRange(img_gray, 1, 255)
+    img_binary = cv2.inRange(img_gray, 1, 255)  # type: ignore
+
     # Step 4: Morphological open operation: first corrode and dilate expand, remove small noise points
+    # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    # img_binary: cv2.typing.MatLike = cv2.morphologyEx(img_binary, cv2.MORPH_CLOSE, kernel, iterations=1)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (15, 15))
     img_opened: cv2.typing.MatLike = cv2.morphologyEx(
         img_binary, cv2.MORPH_OPEN, kernel, iterations=1)
     return img_opened
+
+def remove_zero_rows(binary_img: cv2.typing.MatLike) -> cv2.typing.MatLike:
+    """
+    Removes rows that are entirely zero from the binary image.
+    This is useful for cleaning up the image after morphological operations.
+
+    Args:
+        binary_img (cv2.typing.MatLike): The binary image from which to remove zero rows.
+
+    Raises:
+        ValueError: If the input binary image is a zero matrix.
+
+    Returns:
+        cv2.typing.MatLike: The binary image with zero rows removed.
+    """
+    non_zero_rows = np.any(binary_img != 0, axis=1)
+    row_indices = np.where(non_zero_rows)[0]
+    if len(row_indices) > 0:
+        top, bottom = row_indices[0], row_indices[-1]
+        binary_img = binary_img[top:bottom + 1, :]
+    else:
+        raise ValueError("The input binary image is a zero matrix.")
+    return binary_img
