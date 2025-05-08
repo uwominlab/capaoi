@@ -47,7 +47,7 @@ def main() -> None:
     settings: QSettings = QSettings("MinLab", "CapAOI")
     settings.setValue("camera/debug", True)
     settings.setValue("defect/debug", True)
-    settings.setValue("relay1/debug", True)
+    settings.setValue("relay2/debug", True)
 
     # Create the main window and run the application
     app: QApplication = QApplication(sys.argv)

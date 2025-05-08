@@ -18,7 +18,7 @@ from src.params import RELAY_OFF, RELAY_ON, VENDOR_ID, PRODUCT_ID
 
 # Logging configuration block
 settings: QSettings = QSettings("MinLab", "CapAOI")
-RELAY_DEBUG: bool = settings.value("relay1/debug", type=bool, defaultValue=False)
+RELAY_DEBUG: bool = settings.value("relay2/debug", type=bool, defaultValue=False)
 logging.basicConfig(
     level=logging.DEBUG if RELAY_DEBUG else logging.ERROR,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -56,7 +56,7 @@ class RelayController:
         """
         self.vendor_id = vendor_id
         self.product_id = product_id
-        self.device = usb.core.find(idVendor=self.vendor_id, idProduct=self.product_id)
+        self.device = usb.core.find(idVendor=self.vendor_id, idProduct=self.product_id)  # type: ignore
         if self.device is None:
             raise ValueError("Device not found")
         usb.util.claim_interface(self.device, 0)

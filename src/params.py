@@ -15,6 +15,7 @@ from typing import Annotated
 ROOT_DIR: Path = Path(__file__).parent.parent.resolve()
 # Define global paths
 DATA_DIR: Path = ROOT_DIR / 'data'
+IMAGES_DIR: Path = ROOT_DIR / 'images'
 BACKUP_DIR: Path = ROOT_DIR / 'backup'
 LOG_DIR: Path = ROOT_DIR / 'logs'
 
@@ -26,7 +27,7 @@ DEFAULT_OFFSET_Y: int = 16
 
 # Camera image hyper parameters
 INIT_EXPOSURE_TIME: int = 12490
-INIT_FRAME_RATE: int = 20
+INIT_FRAME_RATE: int = 15
 INIT_GAIN: int = 10
 
 MAX_WIDTH: int = 4196
