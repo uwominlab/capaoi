@@ -104,7 +104,8 @@ def find_contours_img(
         rect = cv2.minAreaRect(contour)
         center_x, length = rect[0][0], max(rect[1])
         # remove the background noise
-        if length < normal_length_range[0] - 20 or normal_length_range[1] + 20 < length or center_x < 0.40 * img_raw.shape[1] or 0.60 * img_raw.shape[1] < center_x:
+        if length < normal_length_range[0] - 20 or normal_length_range[1] + 20 < length or \
+            center_x < 0.10 * img_raw.shape[1] or 0.90 * img_raw.shape[1] < center_x:
             continue
         # else:
         capsule_centers.append(rect[0])
@@ -121,7 +122,7 @@ def find_contours_img(
                 center[1])), 10, (0, 255, 0), -1)
             cv2.putText(draw_img, str(index + 1), (int(center[0]), int(
                 center[1])), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 2)
-        cv2.imwrite("Fig0505_contours.png", draw_img)
+        # cv2.imwrite("Fig_0505_contours.png", draw_img)
 
     # Step 4: Import the mask of the standard capsule
     mask_opened_overall, mask_opened_head, mask_opened_tail \
@@ -195,23 +196,32 @@ def calculate_contours_similarity(
     main_contour = max(target_opened_contours, key=cv2.contourArea)
 
     # Extract mask contour
-    mask_opened_contours = cv2.findContours(
-        mask_opened, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    mask_opened_contours = grab_contours(mask_opened_contours)
-    mask_opened_cnt1 = max(mask_opened_contours, key=cv2.contourArea)
+    # mask_opened_contours = cv2.findContours(
+    #     mask_opened, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    # mask_opened_contours = grab_contours(mask_opened_contours)
+    # mask_opened_cnt1 = max(mask_opened_contours, key=cv2.contourArea)
+    # Method 1: Hu Moments similarity by matching shapes
+    # similarity = cv2.matchShapes(
+    #     main_contour, mask_opened_cnt1, cv2.CONTOURS_MATCH_I1, 0.0)
 
-    similarity = cv2.matchShapes(
-        main_contour, mask_opened_cnt1, cv2.CONTOURS_MATCH_I1, 0.0)
+    # similarity = cv2.matchShapes(main_contour, mask_opened_cnt1, cv2.CONTOURS_MATCH_I1, 0.0)
+    # Method 2: Mirror image similarity
+    # Flip the image horizontally to create a mirror image
+    flipped = cv2.flip(target_opened, 1)  # flip the image horizontally
+    # Calculate the absolute difference between the original and flipped images
+    diff = cv2.absdiff(target_opened, flipped)
+    # similarity ranges from 0 to 1
+    similarity: float = 1.0 - (np.sum(diff) / (target_opened.size * 255.0))  # type: ignore
+    # Method 3: Center axis difference method
+    # Find the center of the image and split it into left and right halves
+    # h, w = target_opened.shape
+    # mid = int(w // 2)
+    # left, right = target_opened[:, :mid], target_opened[:, -mid:]
+    # right_flipped = cv2.flip(right, 1)
+    # diff = cv2.absdiff(left, right_flipped)
+    # similarity: float = 1.0 - (np.sum(diff) / (left.size * 255.0))
 
-    # Take the largest contour as the main contour
-    if main_contour is not None:
-        # main_contour: cv2.typing.MatLike = max(contours, key=cv2.contourArea)
-        similarity: float = cv2.matchShapes(
-            contour1=main_contour,
-            contour2=mask_opened_cnt1,
-            method=cv2.CONTOURS_MATCH_I1,
-            parameter=0.0)
-        return main_contour, similarity
+    return main_contour, similarity
 
 
 if __name__ == "__main__":

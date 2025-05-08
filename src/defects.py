@@ -146,8 +146,8 @@ def detect_capsule_defects(
             similarities[0], similarities[1], similarities[2]
 
         is_abnormal_similarity: bool =\
-            similarity_threshold_overall <= similarity_overall \
-            or similarity_threshold_head < similarity_head or similarity_threshold_head < similarity_tail
+            similarity_threshold_overall >= similarity_overall \
+            or similarity_threshold_head >= similarity_head or similarity_threshold_head >= similarity_tail
         if is_abnormal_similarity and center not in abnormal_capsule_centers:
             abnormal_capsule_centers.append(center)
             if not DEFECTS_DETECTION_DEBUG:
@@ -169,6 +169,7 @@ def detect_capsule_defects(
                 f"Area Normal: {normal_area_range[0] <= area <= normal_area_range[1]}\n" \
                 f"Contour Similarity: {similarity_overall:.4f}, {similarity_head:.4f}, {similarity_tail:.4f} (Lower is better)\n" \
                 f"Similarities: {similarity_threshold_overall <= similarity_overall}, {similarity_threshold_head < similarity_head}, {similarity_threshold_head < similarity_tail}\n" \
+                f"Similarity range: {similarity_threshold_overall}, {similarity_threshold_head}, {similarity_threshold_head}\n" \
                 f"Local Defect Length: {max_length}\n" \
                 f"Partial Defect Detected: {partial_defect}\n"
             logging.debug(info)
