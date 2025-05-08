@@ -75,7 +75,7 @@ class CameraThread(QThread):
     """
 
     # Signal to send the frame image, frame count, and timestamp to the UI
-    frame_signal: pyqtSignal = pyqtSignal(np.ndarray, int, float, float)
+    frame_signal: pyqtSignal = pyqtSignal(np.ndarray, int, float, float, float)
     frame_count: int = 0
 
     # Signal to send the timestamp to actuate the relay
@@ -168,8 +168,7 @@ class CameraThread(QThread):
             if grab_result.GrabSucceeded():
                 pylon_image = converter.Convert(grab_result)
                 image = pylon_image.GetArray()
-                cv2.imwrite("Fig0506_raw.bmp", image)
-                # image = cv2.imread("Fig0505_raw.bmp", image)
+                # cv2.imwrite("Fig_0507_raw.png", image)
 
                 # Remove background colour
                 bgc_ranges: dict[str, tuple[list[int], list[int]]] = {
@@ -186,11 +185,14 @@ class CameraThread(QThread):
                         ]
                     )
                 }
+                start_processing_time: float = time.time()
+
+                # Remove the background colour from the image
                 image = remove_background(image, bgc_ranges)
 
                 # Obtain the morphologically processed copy of the image
                 image_opened: cv2.typing.MatLike = get_img_opened(image)
-                cv2.imwrite("Fig0505_opened.png", image_opened)
+                # cv2.imwrite("Fig_0505_opened.png", image_opened)
 
                 # Find the contours in the image
                 capsule_set_raw, capsule_set_opened, \
@@ -260,7 +262,7 @@ class CameraThread(QThread):
 
                 self.frame_count += 1
                 self.frame_signal.emit(
-                    image, self.frame_count, grab_time, self.camera.ResultingFrameRate.GetValue())
+                    image, self.frame_count, grab_time, grab_time - start_processing_time, self.camera.ResultingFrameRate.GetValue())
 
             grab_result.Release()
 
