@@ -14,6 +14,7 @@ from cv2.typing import MatLike
 
 from PyQt6.QtCore import QSettings
 
+from src.params import INIT_WIDTH
 
 MIN_BINARY_THRESH: int = 6
 MAX_LENGTH: int = 0
@@ -131,12 +132,14 @@ def detect_capsule_defects(
                 continue
 
         # Step 2 >> Check if the capsule has the proper area
-        if not normal_area_range[0] <= area <= normal_area_range[1] and \
-                center not in abnormal_capsule_centers:
-            abnormal_capsule_centers.append(center)
-            if not DEFECTS_DETECTION_DEBUG:
-                continue
-
+        if 0.40 * INIT_WIDTH < center[0] < 0.60 * INIT_WIDTH:
+            if not normal_area_range[0] <= area <= normal_area_range[1] and \
+                    center not in abnormal_capsule_centers:
+                abnormal_capsule_centers.append(center)
+                if not DEFECTS_DETECTION_DEBUG:
+                    continue
+        else:
+            area = (normal_area_range[0] + normal_area_range[1]) / 2
         # Step 3 >> Check for contour similarity
         # Higher similarity indicates more deviation from the expected shape
         similarity_overall, similarity_head, similarity_tail = \
