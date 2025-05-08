@@ -241,7 +241,7 @@ class MainWindow(QMainWindow):
         self.update_time()
 
     def update_frame(
-        self, image: np.ndarray, count: int, timestamp: float, frame_rate: float
+        self, image: np.ndarray, count: int, timestamp: float, algorithm_processing_time: float, frame_rate: float
     ) -> None:
         """
         Update the image label with the latest frame.
@@ -250,6 +250,8 @@ class MainWindow(QMainWindow):
             image (np.ndarray[np.uint8]): OpenCV image array
             count (int): Total frame count
             timestamp (float): Timestamp of the frame
+            algorithm_processing_time (float): Time taken for algorithm to process the frame
+            frame_rate(float): Resulting frame rate of the camera
         """
         height, width = image.shape[:2]
         bytes_per_line = width * 3
@@ -266,7 +268,9 @@ class MainWindow(QMainWindow):
 
         # Update the status label with frame count and timestamp
         status_text: str = \
-            f"Frame: {count} | Timestamp: {timestamp:.2f} | Frame Rate: {frame_rate:.2f} fps"
+            f"Frame Count: {count} | Timestamp: {timestamp:.4f}\n\
+                Algorithm Processing Time: {algorithm_processing_time:.4f} | Maximum algorithm runs per second: {1.0/algorithm_processing_time:.4f}\n\
+                    Resulting Camera Frame Rate: {frame_rate:.2f} fps"
         self.status_label.setText(status_text)
         self.time_label.setText(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
